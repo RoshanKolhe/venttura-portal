@@ -4,12 +4,14 @@ import { styled } from '@mui/material/styles';
 import { Container, Typography } from '@mui/material';
 // hooks
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
 import useResponsive from '../hooks/useResponsive';
 // components
 import Logo from '../components/logo';
 // sections
 import { LoginForm } from '../sections/auth/login';
+import { FirebaseContext } from '../firebase_setup/firebase';
 
 // ----------------------------------------------------------------------
 
@@ -45,7 +47,7 @@ export default function LoginPage() {
   const mdUp = useResponsive('up', 'md');
   const location = useLocation();
   const navigate = useNavigate();
-  const isAuthenticated = localStorage.getItem('isAuthenticated');
+  const { user } = useContext(FirebaseContext);
   const permissions = localStorage.getItem('permissions');
 
   useEffect(() => {
@@ -53,11 +55,11 @@ export default function LoginPage() {
       navigate('/dashboard', { replace: true });
       return;
     }
-    if (isAuthenticated === 'true') {
+    if (user) {
       const { from } = location.state || { from: { pathname: '/dashboard' } };
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, location, navigate]);
+  }, [user, location, navigate]);
 
   return (
     <>

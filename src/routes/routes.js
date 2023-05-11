@@ -1,23 +1,24 @@
 import { useNavigate, useRoutes } from 'react-router-dom';
 // layouts
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
+import OrdersPage from '../pages/OrdersPage';
 import DashboardLayout from '../layouts/dashboard';
 import LoginPage from '../pages/LoginPage';
 import Page404 from '../pages/Page404';
 import DashboardAppPage from '../pages/DashboardAppPage';
 // eslint-disable-next-line import/no-named-as-default
 import PrivateRoutes from './PrivateRoute';
-import app from '../firebase_setup/firebase';
+import { FirebaseContext } from '../firebase_setup/firebase';
+import UserPage from '../pages/UserPage';
 // ----------------------------------------------------------------------
 
 export default function Router() {
   const navigate = useNavigate();
-  const auth = getAuth(app);
-
+  const { user } = useContext(FirebaseContext);
+  console.log(user);
   useEffect(() => {
-    const isAuthenticated = !!auth.currentUser;
-    if (!isAuthenticated) {
+    if (!user) {
       navigate('/login');
     }
   }, []);
@@ -30,7 +31,11 @@ export default function Router() {
         {
           path: '/',
           element: <DashboardLayout />,
-          children: [{ path: '/dashboard', element: <DashboardAppPage /> }],
+          children: [
+            { path: '/dashboard', element: <DashboardAppPage /> },
+            { path: '/user', element: <UserPage /> },
+            { path: '/orders', element: <OrdersPage /> },
+          ],
         },
       ],
     },

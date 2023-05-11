@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
-import "firebase/auth";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import React, { createContext, useEffect, useState } from 'react';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -14,5 +15,34 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-export default app;
+export const FirebaseContext = createContext(null);
+
+const FirebaseProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        setUser(user);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.log(error);
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+  if (isLoading) {
+    // Show a loading indicator or spinner
+    return <div>Loading...</div>;
+  }
+  return <FirebaseContext.Provider value={{ user }}>{children}</FirebaseContext.Provider>;
+};
+
+export default FirebaseProvider;
