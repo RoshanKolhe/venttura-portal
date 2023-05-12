@@ -99,6 +99,10 @@ export default function OrdersPage() {
   const handleCloseMenu = () => {
     setOpen(null);
   };
+  const handleViewPopUpClick = () => {
+    console.log('popup');
+    window.open('http://localhost:3000/orders/:id', '_blank', 'width=900,height=500');
+  };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -341,15 +345,15 @@ export default function OrdersPage() {
           },
         }}
       >
-        <MenuItem>
+        <MenuItem onClick={() => handleViewPopUpClick()}>
           <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
+          View
         </MenuItem>
 
-        <MenuItem sx={{ color: 'error.main' }}>
+        {/* <MenuItem sx={{ color: 'error.main' }}>
           <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
           Delete
-        </MenuItem>
+        </MenuItem> */}
       </Popover>
     </>
   );
