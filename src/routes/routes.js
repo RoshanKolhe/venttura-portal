@@ -19,7 +19,6 @@ import UserPage from '../pages/UserPage';
 export default function Router() {
   const navigate = useNavigate();
   const { user } = useContext(FirebaseContext);
-  console.log(user);
   useEffect(() => {
     if (!user) {
       navigate('/login');
@@ -36,7 +35,7 @@ export default function Router() {
           element: <DashboardLayout />,
           children: [
             { path: '/dashboard', element: <DashboardAppPage /> },
-            { path: '/user', element: <UserPage /> },
+            { path: '/users', element: <UserPage /> },
             { path: '/orders', element: <OrdersPage /> },
             { path: '/orders/:id', element: <ViewDetails /> },
                       ],

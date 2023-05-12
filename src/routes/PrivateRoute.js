@@ -5,7 +5,6 @@ import { FirebaseContext } from '../firebase_setup/firebase';
 
 export const PrivateRoutes = () => {
   const { user } = useContext(FirebaseContext);
-  console.log(user);
   const location = useLocation();
   if (user === undefined || user === null) {
     return null; // or loading indicator/spinner/etc

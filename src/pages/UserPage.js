@@ -1,7 +1,11 @@
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
+import { Icon } from '@iconify/react';
+import plusFill from '@iconify/icons-eva/plus-fill';
+
 // @mui
 import {
   Card,
@@ -21,24 +25,29 @@ import {
   IconButton,
   TableContainer,
   TablePagination,
+  Modal,
 } from '@mui/material';
 // components
+import { collection, doc, getDoc, getDocs, getFirestore } from 'firebase/firestore';
+import CommonSnackBar from '../common/CommonSnackBar';
+import NewUserForm from '../components/new-user/NewUserForm';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // sections
-import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
+import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 // mock
-import USERLIST from '../_mock/user';
+import users from '../_mock/user';
+import CustomBox from '../common/CustomBox';
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', alignRight: false },
-  { id: 'company', label: 'Company', alignRight: false },
-  { id: 'role', label: 'Role', alignRight: false },
-  { id: 'isVerified', label: 'Verified', alignRight: false },
-  { id: 'status', label: 'Status', alignRight: false },
+  { id: 'email', label: 'Email', alignRight: false },
+  { id: 'city', label: 'City', alignRight: false },
+  { id: 'revenuegenerated', label: 'Total Revenue', alignRight: false },
+  { id: 'unitSold', label: 'Units Sold', alignRight: false },
   { id: '' },
 ];
 
@@ -75,11 +84,12 @@ function applySortFilter(array, comparator, query) {
 
 export default function UserPage() {
   const [open, setOpen] = useState(null);
-
+  const [msg, setMsg] = useState('');
+  const [openModal, setOpenMdal] = useState(false);
   const [page, setPage] = useState(0);
-
+  const navigate = useNavigate();
   const [order, setOrder] = useState('asc');
-
+  const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState([]);
 
   const [orderBy, setOrderBy] = useState('name');
@@ -87,7 +97,11 @@ export default function UserPage() {
   const [filterName, setFilterName] = useState('');
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [openSnackBar, setOpenSnackBar] = useState(false);
 
+  const handleOpenSnackBar = () => setOpenSnackBar(true);
+  const handleCloseSnackBar = () => setOpenSnackBar(false);
+  const db = getFirestore();
   const handleOpenMenu = (event) => {
     setOpen(event.currentTarget);
   };
@@ -104,7 +118,7 @@ export default function UserPage() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
+      const newSelecteds = users.map((n) => n.name);
       setSelected(newSelecteds);
       return;
     }
@@ -139,73 +153,90 @@ export default function UserPage() {
     setPage(0);
     setFilterName(event.target.value);
   };
+  const handleOpen = () => setOpenMdal(true);
+  const handleClose = () => setOpenMdal(false);
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
-
-  const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
+  const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
+  const fetchData = async () => {
+    const querySnapshot = await getDocs(collection(db, 'users'));
+    const results = [];
+    // eslint-disable-next-line no-restricted-syntax
+    querySnapshot.docs.map(async (element) => {
+      const data = element.data();
+      results.push({ id: element.id, ...data });
+    });
+    setUsers(results);
+  };
+  console.log('users', users);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <>
       <Helmet>
-        <title> User | Minimal UI </title>
+        <title> Users | Admin </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            User
+            Users
           </Typography>
-          <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
+          <Button
+            variant="contained"
+            component={RouterLink}
+            to="#"
+            startIcon={<Icon icon={plusFill} />}
+            onClick={handleOpen}
+          >
             New User
           </Button>
         </Stack>
 
         <Card>
-          <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
               <Table>
-                <UserListHead
+                <ListHead
+                  isCheckbox={false}
                   order={order}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
-                  rowCount={USERLIST.length}
+                  rowCount={users.length}
                   numSelected={selected.length}
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, name, role, status, company, avatarUrl, isVerified } = row;
+                    const { id, display_name: name, email, city, revenuegenerated, unitsSold } = row;
                     const selectedUser = selected.indexOf(name) !== -1;
 
                     return (
                       <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
-                        <TableCell padding="checkbox">
+                        {/* <TableCell padding="checkbox">
                           <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, name)} />
+                        </TableCell> */}
+
+                        <TableCell component="th" scope="row">
+                          <Typography variant="subtitle2" noWrap>
+                            {name}
+                          </Typography>
                         </TableCell>
 
-                        <TableCell component="th" scope="row" padding="none">
-                          <Stack direction="row" alignItems="center" spacing={2}>
-                            <Avatar alt={name} src={avatarUrl} />
-                            <Typography variant="subtitle2" noWrap>
-                              {name}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
+                        <TableCell align="left">{email}</TableCell>
 
-                        <TableCell align="left">{company}</TableCell>
+                        <TableCell align="left">{city}</TableCell>
 
-                        <TableCell align="left">{role}</TableCell>
+                        <TableCell align="left">{revenuegenerated}</TableCell>
 
-                        <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell>
-
-                        <TableCell align="left">
-                          <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label>
-                        </TableCell>
+                        <TableCell align="left">{unitsSold}</TableCell>
 
                         <TableCell align="right">
                           <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
@@ -252,13 +283,32 @@ export default function UserPage() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={USERLIST.length}
+            count={users.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
+
+        <Modal
+          open={openModal}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <CustomBox>
+            <NewUserForm
+              handleClose={handleClose}
+              onDataSubmit={() => {
+                handleClose();
+                fetchData();
+                setMsg('Successfully Created New Member');
+                handleOpenSnackBar();
+              }}
+            />
+          </CustomBox>
+        </Modal>
       </Container>
 
       <Popover
@@ -289,6 +339,12 @@ export default function UserPage() {
           Delete
         </MenuItem>
       </Popover>
+      <CommonSnackBar
+        openSnackBar={openSnackBar}
+        handleCloseSnackBar={handleCloseSnackBar}
+        msg={msg}
+        severity="success"
+      />
     </>
   );
 }
