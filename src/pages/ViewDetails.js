@@ -18,6 +18,7 @@ import {
   //   TableBody,
   //   TableCell,
   //   Container,
+  Grid,
   Typography,
   //   IconButton,
   //   TableContainer,
@@ -206,30 +207,135 @@ export default function ViewDetails() {
 
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        Buyers Details
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Buyers Name : TestBuyer
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Buyers Contact : +917845127845
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Buyers Address : Nashik
-      </Typography>
-      <Typography variant="h4" gutterBottom>
-        Distributor Details
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Distributor Name : TestDistributor
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Distributor Contact : +917845127845
-      </Typography>
-      <Typography variant="h5" gutterBottom>
-        Distributor Address : Nashik
-      </Typography>
+      <Grid container px={3}>
+        <Grid item xs={12}>
+          <Typography variant="h4">Buyers Details</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Buyers Name : TestBuyer</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Buyers Contact : +917845127845</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Buyers Address : Nashik</Typography>
+        </Grid>
+        <Grid item xs={12} mt={5}>
+          <Typography variant="h4">Distributor Details</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Distributor Name : TestDistributor</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Distributor Contact : +917845127845</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Distributor Address : Nashik</Typography>
+        </Grid>
+        <Grid item xs={12} mt={10}>
+          <Typography variant="h3">Products</Typography>
+        </Grid>
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            border: '1px solid',
+            borderRadius: '5px',
+            margin: '25px',
+            padding: '25px',
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Grid item xs={12} mt={0}>
+            <Typography>Flexi+</Typography>
+          </Grid>
+          <Grid item xs={12} mt={0}>
+            <Typography>90 tabs (₹1500)</Typography>
+          </Grid>
+          <Grid item xs={12} mt={0}>
+            <Typography>Qty:2</Typography>
+            <Typography>Discount: 5%</Typography>
+          </Grid>
+          <Grid item xs={12} mt={0}>
+            <Typography>₹3000</Typography>
+            <Typography>Item Total: 2850</Typography>
+          </Grid>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            border: '1px solid',
+            borderRadius: '5px',
+            margin: '25px',
+            padding: '25px',
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Grid item xs={12} mt={0}>
+            <Typography>Livo+</Typography>
+          </Grid>
+          <Grid item xs={12} mt={0}>
+            <Typography>150ml (₹270)</Typography>
+          </Grid>
+          <Grid item xs={12} mt={0}>
+            <Typography>Qty:3</Typography>
+            <Typography>Discount: 10%</Typography>
+          </Grid>
+          <Grid item xs={12} mt={0}>
+            <Typography>₹810</Typography>
+            <Typography>Item Total: 729</Typography>
+          </Grid>
+        </div>
+        <Grid item xs={12} mt={2} style={{ display: 'flex', flex: '1', alignItems: 'center', width: '100%' }}>
+          <Typography style={{ fontSize: '25px', fontWeight: '800' }}>Total Before Discount</Typography>
+          <Typography ml={5} style={{ fontSize: '25px', fontWeight: '500' }}>
+            ₹3810
+          </Typography>
+        </Grid>
+        <Grid item xs={12} mt={0} style={{ display: 'flex', flex: '1', alignItems: 'center' }}>
+          <Typography style={{ fontSize: '25px', fontWeight: '800' }}>Total After Discount</Typography>
+          <Typography ml={5} style={{ fontSize: '25px', fontWeight: '500' }}>
+            ₹3579.00
+          </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>order ID : TestDistributor</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Order Date : 05/10/2023, 11:53:59 AM</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Typography>Sales Person : Roshan Kolhe</Typography>
+        </Grid>
+
+        <Grid
+          item
+          xs={12}
+          mt={5}
+          py={3}
+          style={{
+            backgroundColor: '#ff5003',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flex: '1',
+              alignItems: 'center',
+              justifyContent: 'end',
+              paddingRight: '20px',
+              color: 'white',
+            }}
+          >
+            <Typography style={{ fontSize: '15px', fontWeight: '500' }}>Total : </Typography>
+            <Typography style={{ fontSize: '25px', fontWeight: '600' }}>₹3579.00</Typography>
+          </div>
+        </Grid>
+      </Grid>
     </>
   );
 }

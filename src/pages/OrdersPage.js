@@ -23,6 +23,7 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 // components
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
@@ -75,8 +76,10 @@ function applySortFilter(array, comparator, query) {
 
 export default function OrdersPage() {
   const [open, setOpen] = useState(null);
-
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
+
+  const [selectedRow, setSelectedRow] = useState();
 
   const [order, setOrder] = useState('asc');
 
@@ -92,8 +95,9 @@ export default function OrdersPage() {
 
   const db = getFirestore();
 
-  const handleOpenMenu = (event) => {
+  const handleOpenMenu = (event, row) => {
     setOpen(event.currentTarget);
+    setSelectedRow(row);
   };
 
   const handleCloseMenu = () => {
@@ -101,7 +105,8 @@ export default function OrdersPage() {
   };
   const handleViewPopUpClick = () => {
     console.log('popup');
-    window.open('http://localhost:3000/orders/:id', '_blank', 'width=900,height=500');
+    console.log(selectedRow);
+    navigate(`/orders/${selectedRow.id}`);
   };
 
   const handleRequestSort = (event, property) => {
@@ -274,7 +279,13 @@ export default function OrdersPage() {
                         </TableCell>
 
                         <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
+                          <IconButton
+                            size="large"
+                            color="inherit"
+                            onClick={(e) => {
+                              handleOpenMenu(e, row);
+                            }}
+                          >
                             <Iconify icon={'eva:more-vertical-fill'} />
                           </IconButton>
                         </TableCell>
