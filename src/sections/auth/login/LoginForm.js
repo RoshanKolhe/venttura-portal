@@ -20,6 +20,8 @@ import { useState } from 'react';
 import { Link as RouterLink, Link, useNavigate } from 'react-router-dom';
 
 import * as Yup from 'yup';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import app from '../../../firebase_setup/firebase';
 import CommonSnackBar from '../../../common/CommonSnackBar';
 
 // ----------------------------------------------------------------------
@@ -28,11 +30,10 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [openSnackBar, setOpenSnackBar] = useState(false);
-  const [isOtpSend, setIsOtpSend] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const auth = getAuth();
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
-
   const LoginSchema = Yup.object().shape({
     email: Yup.string().email('Email must be a valid email address').required('Email is required'),
     password: Yup.string()
@@ -43,18 +44,23 @@ export default function LoginForm() {
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
         'Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character'
       ),
-    otp: Yup.string().required('OTP is required'),
   });
 
   const formik = useFormik({
     initialValues: {
       email: '',
       password: '',
-      otp: '',
       remember: true,
     },
     validationSchema: LoginSchema,
-    onSubmit: async (values) => {},
+    onSubmit: async (values) => {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      } catch (error) {
+        setErrorMessage(error);
+        handleOpenSnackBar();
+      }
+    },
   });
 
   const { errors, touched, isSubmitting, handleSubmit, getFieldProps } = formik;
