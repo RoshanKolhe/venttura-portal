@@ -170,7 +170,6 @@ export default function UserPage() {
     });
     setUsers(results);
   };
-  console.log('users', users);
   useEffect(() => {
     fetchData();
   }, []);
