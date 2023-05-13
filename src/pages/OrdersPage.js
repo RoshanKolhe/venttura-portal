@@ -23,6 +23,7 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 // components
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
@@ -75,8 +76,10 @@ function applySortFilter(array, comparator, query) {
 
 export default function OrdersPage() {
   const [open, setOpen] = useState(null);
-
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
+
+  const [selectedRow, setSelectedRow] = useState();
 
   const [order, setOrder] = useState('asc');
 
@@ -92,12 +95,18 @@ export default function OrdersPage() {
 
   const db = getFirestore();
 
-  const handleOpenMenu = (event) => {
+  const handleOpenMenu = (event, row) => {
     setOpen(event.currentTarget);
+    setSelectedRow(row);
   };
 
   const handleCloseMenu = () => {
     setOpen(null);
+  };
+  const handleViewPopUpClick = () => {
+    console.log('popup');
+    console.log(selectedRow);
+    navigate(`/orders/${selectedRow.id}`);
   };
 
   const handleRequestSort = (event, property) => {
@@ -270,7 +279,13 @@ export default function OrdersPage() {
                         </TableCell>
 
                         <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
+                          <IconButton
+                            size="large"
+                            color="inherit"
+                            onClick={(e) => {
+                              handleOpenMenu(e, row);
+                            }}
+                          >
                             <Iconify icon={'eva:more-vertical-fill'} />
                           </IconButton>
                         </TableCell>
@@ -341,15 +356,15 @@ export default function OrdersPage() {
           },
         }}
       >
-        <MenuItem>
+        <MenuItem onClick={() => handleViewPopUpClick()}>
           <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
+          View
         </MenuItem>
 
-        <MenuItem sx={{ color: 'error.main' }}>
+        {/* <MenuItem sx={{ color: 'error.main' }}>
           <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
           Delete
-        </MenuItem>
+        </MenuItem> */}
       </Popover>
     </>
   );

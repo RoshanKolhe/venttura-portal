@@ -1,8 +1,11 @@
 import { useNavigate, useRoutes } from 'react-router-dom';
 // layouts
 import React, { useContext, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
+// import { getAuth } from 'firebase/auth';
 import OrdersPage from '../pages/OrdersPage';
+// eslint-disable-next-line import/no-unresolved
+import ViewDetails from '../pages/ViewDetails';
+// import ViewDetails from '../pages/DashboardAppPage';
 import DashboardLayout from '../layouts/dashboard';
 import LoginPage from '../pages/LoginPage';
 import Page404 from '../pages/Page404';
@@ -34,7 +37,8 @@ export default function Router() {
             { path: '/dashboard', element: <DashboardAppPage /> },
             { path: '/users', element: <UserPage /> },
             { path: '/orders', element: <OrdersPage /> },
-          ],
+            { path: '/orders/:id', element: <ViewDetails /> },
+                      ],
         },
       ],
     },
