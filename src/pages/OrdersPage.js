@@ -199,7 +199,7 @@ export default function OrdersPage() {
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
-      const formattedDate = date.toLocaleString(); // change the format to your preferred date format
+      const formattedDate = date.toLocaleString(); //  change the format to your preferred date format
       return formattedDate;
     }
     return '';
