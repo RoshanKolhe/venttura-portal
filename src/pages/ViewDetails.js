@@ -390,13 +390,13 @@ export default function ViewDetails() {
                   </Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  {/* <Typography>order ID : {OrderId}</Typography> */}
+                  <Typography>order ID : {OrderId}</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  {/* <Typography>Order Date : {getFormattedDate(OrderDate)}</Typography> */}
+                  <Typography>Order Date : {getFormattedDate(OrderDate)}</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  {/* <Typography>Sales Person : {orderCreator}</Typography> */}
+                  <Typography>Sales Person : {orderCreator.display_name}</Typography>
                 </Grid>
 
                 <Grid
