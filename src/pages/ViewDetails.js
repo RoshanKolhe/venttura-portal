@@ -1,8 +1,8 @@
 // import { Helmet } from 'react-helmet-async';
 // import { filter } from 'lodash';
 // import { sentenceCase } from 'change-case';
-// import { useEffect, useState } from 'react';
-// import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
 // // @mui
 import {
   //   Card,
@@ -24,6 +24,8 @@ import {
   //   TableContainer,
   //   TablePagination,
 } from '@mui/material';
+
+import { useNavigate, useParams } from 'react-router-dom';
 // // components
 // import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 // import Label from '../components/label';
@@ -75,23 +77,30 @@ import {
 // }
 
 export default function ViewDetails() {
-  //   const [open, setOpen] = useState(null);
+  const params = useParams();
+  const [data, setData] = useState([]);
 
-  //   const [page, setPage] = useState(0);
+  const [open, setOpen] = useState(null);
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
 
-  //   const [order, setOrder] = useState('asc');
+  const [selectedRow, setSelectedRow] = useState();
 
-  //   const [orders, setOrders] = useState([]);
+  const [order, setOrder] = useState('asc');
 
-  //   const [selected, setSelected] = useState([]);
+  const [orders, setOrders] = useState([]);
 
-  //   const [orderBy, setOrderBy] = useState('name');
+  const [selected, setSelected] = useState([]);
 
-  //   const [filterName, setFilterName] = useState('');
+  const [orderBy, setOrderBy] = useState('name');
 
-  //   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [filterName, setFilterName] = useState('');
 
-  //   const db = getFirestore();
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const db = getFirestore();
+  const collectionName = 'Orders';
+  const documentId = params.id;
 
   //   const handleOpenMenu = (event) => {
   //     setOpen(event.currentTarget);
@@ -155,187 +164,271 @@ export default function ViewDetails() {
 
   //   const isNotFound = !filteredUsers.length && !!filterName;
 
-  //   const fetchData = async () => {
-  //     const querySnapshot = await getDocs(collection(db, 'Orders'));
-  //     const results = [];
-  //     // eslint-disable-next-line no-restricted-syntax
-  //     await Promise.all(
-  //       querySnapshot.docs.map(async (element) => {
-  //         const data = element.data();
-  //         if (data.status) {
-  //           if (data.BuyerRefrence) {
-  //             const referenceDoc = doc(db, data.BuyerRefrence.path);
-  //             const referenceDocSnap = await getDoc(referenceDoc);
-  //             const referenceData = referenceDocSnap.data();
+  // eslint-disable-next-line consistent-return
+  const getDataFromFirebase = async (collectionName, documentId) => {
+    try {
+      const firestore = getFirestore();
+      const documentRef = doc(firestore, collectionName, documentId);
+      const documentSnapshot = await getDoc(documentRef);
+      const results = [];
+      if (documentSnapshot.data()) {
+        const data = documentSnapshot.data();
+        const id = documentSnapshot.id;
+        console.log('documentData ', data);
 
-  //             data.BuyerRefrence = referenceData;
-  //           }
-  //           if (data.DistributorRefrence) {
-  //             const referenceDoc = doc(db, data.DistributorRefrence.path);
-  //             const referenceDocSnap = await getDoc(referenceDoc);
-  //             const referenceData = referenceDocSnap.data();
+        if (data.status) {
+          if (data.BuyerRefrence) {
+            const referenceDoc = doc(firestore, data.BuyerRefrence.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
 
-  //             data.DistributorRefrence = referenceData;
-  //           }
-  //           if (data.orderCreator) {
-  //             const referenceDoc = doc(db, data.orderCreator.path);
-  //             const referenceDocSnap = await getDoc(referenceDoc);
-  //             const referenceData = referenceDocSnap.data();
+            data.BuyerRefrence = referenceData;
+          }
+          if (data.DistributorRefrence) {
+            const referenceDoc = doc(firestore, data.DistributorRefrence.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
 
-  //             data.orderCreator = referenceData;
-  //           }
+            data.DistributorRefrence = referenceData;
+          }
+          if (data.orderCreator) {
+            const referenceDoc = doc(firestore, data.orderCreator.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
 
-  //           results.push(data);
-  //         }
-  //       })
-  //     );
-  //     setOrders(results);
-  //   };
+            data.orderCreator = referenceData;
+          }
 
-  //   const getFormattedDate = (orderDate) => {
-  //     if (orderDate) {
-  //       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
-  //       const formattedDate = date.toLocaleString(); // change the format to your preferred date format
-  //       return formattedDate;
-  //     }
-  //     return '';
-  //   };
+          // results.push(data);
+          results.push({ id, ...data });
+          // spread operator
+        }
+        setData(results);
+        // return data;
+      }
+    } catch (error) {
+      console.error('Error retrieving data from Firebase:', error);
+      return null;
+    }
+  };
+  // ######################################################
+  const fetchData = async () => {
+    const querySnapshot = await getDocs(collection(db, 'Orders'));
+    const results = [];
 
-  //   useEffect(() => {
-  //     fetchData();
-  //   }, []);
+    // console.log('DATA :', querySnapshot);
+    await Promise.all(
+      querySnapshot.docs.map(async (element) => {
+        const data = element.data();
+        const id = element.id;
+        if (data.status) {
+          if (data.BuyerRefrence) {
+            const referenceDoc = doc(db, data.BuyerRefrence.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
+
+            data.BuyerRefrence = referenceData;
+          }
+          if (data.DistributorRefrence) {
+            const referenceDoc = doc(db, data.DistributorRefrence.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
+
+            data.DistributorRefrence = referenceData;
+          }
+          if (data.orderCreator) {
+            const referenceDoc = doc(db, data.orderCreator.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
+
+            data.orderCreator = referenceData;
+          }
+
+          // results.push(data);
+          results.push({ id, ...data });
+        }
+      })
+    );
+    setOrders(results);
+    console.log('resultsasdas ', results);
+  };
+
+  const getFormattedDate = (orderDate) => {
+    if (orderDate) {
+      const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
+      const formattedDate = date.toLocaleString(); // change the format to your preferred date format
+      return formattedDate;
+    }
+    return '';
+  };
+
+  useEffect(() => {
+    console.log('useeffect q1');
+    // fetchData();
+    getDataFromFirebase(collectionName, documentId);
+  }, []);
 
   return (
     <>
-      <Grid container px={3}>
-        <Grid item xs={12}>
-          <Typography variant="h4">Buyers Details</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Buyers Name : TestBuyer</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Buyers Contact : +917845127845</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Buyers Address : Nashik</Typography>
-        </Grid>
-        <Grid item xs={12} mt={5}>
-          <Typography variant="h4">Distributor Details</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Distributor Name : TestDistributor</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Distributor Contact : +917845127845</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Distributor Address : Nashik</Typography>
-        </Grid>
-        <Grid item xs={12} mt={10}>
-          <Typography variant="h3">Products</Typography>
-        </Grid>
-        <div
-          style={{
-            display: 'flex',
-            flex: 1,
-            border: '1px solid',
-            borderRadius: '5px',
-            margin: '25px',
-            padding: '25px',
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Grid item xs={12} mt={0}>
-            <Typography>Flexi+</Typography>
-          </Grid>
-          <Grid item xs={12} mt={0}>
-            <Typography>90 tabs (₹1500)</Typography>
-          </Grid>
-          <Grid item xs={12} mt={0}>
-            <Typography>Qty:2</Typography>
-            <Typography>Discount: 5%</Typography>
-          </Grid>
-          <Grid item xs={12} mt={0}>
-            <Typography>₹3000</Typography>
-            <Typography>Item Total: 2850</Typography>
-          </Grid>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            border: '1px solid',
-            borderRadius: '5px',
-            margin: '25px',
-            padding: '25px',
-            width: '100%',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Grid item xs={12} mt={0}>
-            <Typography>Livo+</Typography>
-          </Grid>
-          <Grid item xs={12} mt={0}>
-            <Typography>150ml (₹270)</Typography>
-          </Grid>
-          <Grid item xs={12} mt={0}>
-            <Typography>Qty:3</Typography>
-            <Typography>Discount: 10%</Typography>
-          </Grid>
-          <Grid item xs={12} mt={0}>
-            <Typography>₹810</Typography>
-            <Typography>Item Total: 729</Typography>
-          </Grid>
-        </div>
-        <Grid item xs={12} mt={2} style={{ display: 'flex', flex: '1', alignItems: 'center', width: '100%' }}>
-          <Typography style={{ fontSize: '25px', fontWeight: '800' }}>Total Before Discount</Typography>
-          <Typography ml={5} style={{ fontSize: '25px', fontWeight: '500' }}>
-            ₹3810
-          </Typography>
-        </Grid>
-        <Grid item xs={12} mt={0} style={{ display: 'flex', flex: '1', alignItems: 'center' }}>
-          <Typography style={{ fontSize: '25px', fontWeight: '800' }}>Total After Discount</Typography>
-          <Typography ml={5} style={{ fontSize: '25px', fontWeight: '500' }}>
-            ₹3579.00
-          </Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>order ID : TestDistributor</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Order Date : 05/10/2023, 11:53:59 AM</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography>Sales Person : Roshan Kolhe</Typography>
-        </Grid>
+      {console.log('Data gathered', data)}
+      {data.map((row) => {
+        const {
+          OrderId,
+          BuyerRefrence,
+          DistributorRefrence,
+          OrderDate,
+          orderCreator,
+          status,
+          totalAfterDiscount,
+          totalBeforeDiscount,
+        } = row;
+        // eslint-disable-next-line no-lone-blocks
+        {
+          console.log('Data gathered', BuyerRefrence?.BuyerName);
+        }
+        // eslint-disable-next-line no-lone-blocks
+        {
+          /* const selectedUser = selected.indexOf(row?.OrderId) !== -1; */
+        }
 
-        <Grid
-          item
-          xs={12}
-          mt={5}
-          py={3}
-          style={{
-            backgroundColor: '#ff5003',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flex: '1',
-              alignItems: 'center',
-              justifyContent: 'end',
-              paddingRight: '20px',
-              color: 'white',
-            }}
-          >
-            <Typography style={{ fontSize: '15px', fontWeight: '500' }}>Total : </Typography>
-            <Typography style={{ fontSize: '25px', fontWeight: '600' }}>₹3579.00</Typography>
-          </div>
-        </Grid>
-      </Grid>
+        return (
+          <>
+            <Grid container px={3}>
+              <Grid item xs={12}>
+                <Typography variant="h4">Buyers Details</Typography>
+              </Grid>
+              <div key={OrderId}>
+                {/* Render the data or components here */}
+                <Grid item xs={12}>
+                  <Typography>Buyers Name : {BuyerRefrence?.BuyerName}</Typography>
+                  {console.log('Buyers Details : ', data)}
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography>Buyers Contact : {BuyerRefrence?.ContactNumber}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography>Buyers Address : {BuyerRefrence?.Address}</Typography>
+                </Grid>
+                <Grid item xs={12} mt={5}>
+                  <Typography variant="h4">Distributor Details</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography>Distributor Name : {DistributorRefrence?.VendorName}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography>Distributor Contact : {DistributorRefrence?.DistrbutorContactNumber}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography>Distributor Address : {DistributorRefrence?.Address}</Typography>
+                </Grid>
+                <Grid item xs={12} mt={10}>
+                  <Typography variant="h3">Products</Typography>
+                </Grid>
+                <div
+                  style={{
+                    display: 'flex',
+                    flex: 1,
+                    border: '1px solid',
+                    borderRadius: '5px',
+                    margin: '25px',
+                    padding: '25px',
+                    width: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Grid item xs={12} mt={0}>
+                    <Typography>Flexi+</Typography>
+                  </Grid>
+                  <Grid item xs={12} mt={0}>
+                    <Typography>90 tabs (₹1500)</Typography>
+                  </Grid>
+                  <Grid item xs={12} mt={0}>
+                    <Typography>Qty:2</Typography>
+                    <Typography>Discount: 5%</Typography>
+                  </Grid>
+                  <Grid item xs={12} mt={0}>
+                    <Typography>₹3000</Typography>
+                    <Typography>Item Total: 2850</Typography>
+                  </Grid>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    border: '1px solid',
+                    borderRadius: '5px',
+                    margin: '25px',
+                    padding: '25px',
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Grid item xs={12} mt={0}>
+                    <Typography>Livo+</Typography>
+                  </Grid>
+                  <Grid item xs={12} mt={0}>
+                    <Typography>150ml (₹270)</Typography>
+                  </Grid>
+                  <Grid item xs={12} mt={0}>
+                    <Typography>Qty:3</Typography>
+                    <Typography>Discount: 10%</Typography>
+                  </Grid>
+                  <Grid item xs={12} mt={0}>
+                    <Typography>₹810</Typography>
+                    <Typography>Item Total: 729</Typography>
+                  </Grid>
+                </div>
+                <Grid item xs={12} mt={2}>
+                  <Typography style={{ fontSize: '25px', fontWeight: '800' }}>
+                    Total Before Discount : {totalBeforeDiscount}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} mt={0}>
+                  <Typography style={{ fontSize: '25px', fontWeight: '800' }}>
+                    Total After Discount : {totalAfterDiscount}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  {/* <Typography>order ID : {OrderId}</Typography> */}
+                </Grid>
+                <Grid item xs={12}>
+                  {/* <Typography>Order Date : {getFormattedDate(OrderDate)}</Typography> */}
+                </Grid>
+                <Grid item xs={12}>
+                  {/* <Typography>Sales Person : {orderCreator}</Typography> */}
+                </Grid>
+
+                <Grid
+                  item
+                  xs={12}
+                  mt={5}
+                  py={3}
+                  style={{
+                    backgroundColor: '#ff5003',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flex: '1',
+                      alignItems: 'center',
+                      justifyContent: 'end',
+                      paddingRight: '20px',
+                      color: 'white',
+                    }}
+                  >
+                    <Typography style={{ fontSize: '15px', fontWeight: '500' }}>
+                      Total : {totalAfterDiscount}
+                    </Typography>
+                    {/* <Typography style={{ fontSize: '25px', fontWeight: '600' }}></Typography> */}
+                  </div>
+                </Grid>
+              </div>
+            </Grid>
+          </>
+        );
+      })}
     </>
   );
 }

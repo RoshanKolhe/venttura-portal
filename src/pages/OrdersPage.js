@@ -92,20 +92,18 @@ export default function OrdersPage() {
   const [filterName, setFilterName] = useState('');
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [todos, setTodos] = useState([]);
+
   const db = getFirestore();
 
   const handleOpenMenu = (event, row) => {
     setOpen(event.currentTarget);
     setSelectedRow(row);
   };
-  console.log('Row datass', selectedRow);
+
   const handleCloseMenu = () => {
     setOpen(null);
   };
   const handleViewPopUpClick = () => {
-    console.log('popup');
-    console.log('Row datas', selectedRow);
     navigate(`/orders/${selectedRow.id}`);
   };
 
@@ -158,24 +156,6 @@ export default function OrdersPage() {
   const filteredUsers = applySortFilter(orders, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
-
-  // #######
-  const getAllDocs = async () => {
-    getDocs(collection(db, 'Orders'))
-      .then((querySnapshot) => {
-        const todosArrays = [];
-        querySnapshot.forEach((doc) => {
-          todosArrays.push({ ...doc.data(), id: doc.id });
-        });
-        console.log('todosArrays ', todosArrays);
-        setTodos(todosArrays);
-      })
-      .catch((error) => {
-        console.error('Error getting todos: ', error);
-      });
-  };
-  console.log('todos ', todos);
-  // #######
 
   // const fetchData = async () => {
   //   const querySnapshot = await getDocs(collection(db, 'Orders'));
@@ -252,6 +232,7 @@ export default function OrdersPage() {
 
           // results.push(data);
           results.push({ id, ...data });
+          // spread operator
         }
       })
     );
@@ -270,7 +251,6 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchData();
-    // getAllDocs();
   }, []);
 
   return (
