@@ -2,6 +2,7 @@ import { useNavigate, useRoutes } from 'react-router-dom';
 // layouts
 import React, { useContext, useEffect } from 'react';
 // import { getAuth } from 'firebase/auth';
+import GolasPage from '../pages/GoalsPage';
 import OrdersPage from '../pages/OrdersPage';
 // eslint-disable-next-line import/no-unresolved
 import ViewDetails from '../pages/ViewDetails';
@@ -38,7 +39,8 @@ export default function Router() {
             { path: '/users', element: <UserPage /> },
             { path: '/orders', element: <OrdersPage /> },
             { path: '/orders/:id', element: <ViewDetails /> },
-                      ],
+            { path: '/users/goals/:id', element: <GolasPage /> },
+          ],
         },
       ],
     },

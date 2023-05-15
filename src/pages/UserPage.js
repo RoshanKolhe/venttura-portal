@@ -91,7 +91,7 @@ export default function UserPage() {
   const [order, setOrder] = useState('asc');
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState([]);
-
+  const [selectedRow, setSelectedRow] = useState();
   const [orderBy, setOrderBy] = useState('name');
 
   const [filterName, setFilterName] = useState('');
@@ -102,7 +102,8 @@ export default function UserPage() {
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
   const db = getFirestore();
-  const handleOpenMenu = (event) => {
+  const handleOpenMenu = (event, row) => {
+    setSelectedRow(row);
     setOpen(event.currentTarget);
   };
 
@@ -160,6 +161,7 @@ export default function UserPage() {
   const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
+
   const fetchData = async () => {
     const querySnapshot = await getDocs(collection(db, 'users'));
     const results = [];
@@ -169,6 +171,15 @@ export default function UserPage() {
       results.push({ id: element.id, ...data });
     });
     setUsers(results);
+  };
+
+  const handleEditClick = () => {
+    setOpen(null);
+    handleOpen();
+  };
+
+  const handleGoalClick = () => {
+    navigate(`/users/goals/${selectedRow.id}`);
   };
   useEffect(() => {
     fetchData();
@@ -190,14 +201,17 @@ export default function UserPage() {
             component={RouterLink}
             to="#"
             startIcon={<Icon icon={plusFill} />}
-            onClick={handleOpen}
+            onClick={() => {
+              setSelectedRow();
+              handleOpen();
+            }}
           >
             New User
           </Button>
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar  numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
@@ -238,7 +252,13 @@ export default function UserPage() {
                         <TableCell align="left">{unitsSold}</TableCell>
 
                         <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
+                          <IconButton
+                            size="large"
+                            color="inherit"
+                            onClick={(e) => {
+                              handleOpenMenu(e, row);
+                            }}
+                          >
                             <Iconify icon={'eva:more-vertical-fill'} />
                           </IconButton>
                         </TableCell>
@@ -299,12 +319,13 @@ export default function UserPage() {
           <CustomBox>
             <NewUserForm
               handleClose={handleClose}
-              onDataSubmit={() => {
+              onDataSubmit={(msg) => {
                 handleClose();
                 fetchData();
-                setMsg('Successfully Created New Member');
+                setMsg(msg);
                 handleOpenSnackBar();
               }}
+              initialValues={selectedRow}
             />
           </CustomBox>
         </Modal>
@@ -328,9 +349,13 @@ export default function UserPage() {
           },
         }}
       >
-        <MenuItem>
+        <MenuItem onClick={handleEditClick}>
           <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
           Edit
+        </MenuItem>
+        <MenuItem onClick={handleGoalClick}>
+          <Iconify icon={'octicon:goal-16'} sx={{ mr: 2 }} />
+          Goals
         </MenuItem>
 
         <MenuItem sx={{ color: 'error.main' }}>
