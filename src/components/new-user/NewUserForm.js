@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Field, useFormik } from 'formik';
 import * as yup from 'yup';
 import 'react-phone-input-2/lib/material.css';
+import SaveIcon from '@mui/icons-material/Save';
 import {
   FormHelperText,
   Button,
@@ -16,11 +17,12 @@ import {
 } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
-import { omit } from 'lodash';
+import { initial, omit } from 'lodash';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import closefill from '@iconify/icons-eva/close-fill';
-import { Timestamp, collection, doc, getFirestore, setDoc } from 'firebase/firestore';
+import { Timestamp, collection, doc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
+import { LoadingButton } from '@mui/lab';
 import { variationJson } from '../../utils/constants';
 import LoadingScreen from '../../common/LoadingScreen';
 import CustomBox from '../../common/CustomBox';
@@ -55,30 +57,41 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const formik = useFormik({
     initialValues: {
       id: initialValues?.uid,
-      name: initialValues?.name || '',
+      name: initialValues?.display_name || '',
       email: initialValues?.email || '',
       city: initialValues?.city || '',
     },
     enableReinitialize: true,
     validationSchema: userFormValidationSchema,
     onSubmit: async (values) => {
-      // setLoading(true);
-      // Add the new document to the collection and get the document ID
+      setLoading(true);
       const usersRef = collection(firestore, 'users');
-      const docRef = doc(usersRef);
-      const allGoals = await variationJson();
-      const newUser = {
-        display_name: values.name,
-        email: values.email,
-        city: values.city,
-        uid: docRef.id,
-        revenuegenerated: 0.0,
-        unitsSold: 0,
-        created_time: Timestamp.now(),
-        goals: allGoals,
-      };
-      await setDoc(docRef, newUser);
-      onDataSubmit();
+      if (!initialValues) {
+        const docRef = doc(usersRef);
+        const allGoals = await variationJson();
+        const newUser = {
+          display_name: values.name,
+          email: values.email,
+          city: values.city,
+          uid: docRef.id,
+          revenuegenerated: 0.0,
+          unitsSold: 0,
+          created_time: Timestamp.now(),
+          goals: allGoals,
+        };
+        await setDoc(docRef, newUser);
+        setLoading(false);
+      } else {
+        const docRef = doc(firestore, 'users', initialValues?.id);
+        const newUser = {
+          display_name: values.name,
+          email: values.email,
+          city: values.city,
+        };
+        await updateDoc(docRef, newUser);
+        setLoading(false);
+      }
+      onDataSubmit(initialValues ? 'User updated successfully' : 'User created successfully');
     },
   });
 
@@ -88,7 +101,6 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
 
   return (
     <div>
-      {loading ? <LoadingScreen /> : null}
       <form onSubmit={formik.handleSubmit} id="profileForm">
         <Box
           sx={{
@@ -99,7 +111,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
           }}
         >
           <Typography variant="h6" gutterBottom>
-            New User
+            {initialValues ? 'Update User' : 'New User'}
           </Typography>
           <Tooltip password="Close">
             <IconButton onClick={handleClose}>
@@ -158,9 +170,19 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
         </Grid>
         <Grid container>
           <Grid item margin={2}>
-            <Button color="primary" variant="contained" fullWidth type="submit" form="profileForm">
+            <LoadingButton
+              loading={loading}
+              loadingPosition="start"
+              variant="contained"
+              startIcon={<SaveIcon />}
+              color="primary"
+              fullWidth
+              type="submit"
+              form="profileForm"
+              disabled={loading}
+            >
               Submit
-            </Button>
+            </LoadingButton>
           </Grid>
         </Grid>
         <CommonSnackBar

@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
 import { Icon } from '@iconify/react';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   Toolbar,
   Tooltip,
@@ -18,6 +17,9 @@ import {
 // component
 import { useEffect, useState } from 'react';
 import roundFilterList from '@iconify/icons-ic/round-filter-list';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Iconify from '../../../components/iconify';
 // ----------------------------------------------------------------------
 
@@ -67,7 +69,14 @@ export default function ListToolbar({
 }) {
   // const [startDate, setStartDateData] = useState();
   // const [endDate, setEndDateData] = useState();
+
   const [isFilterClicked, setIsFilterClicked] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date); // handle the selected date
+  };
+  console.log(isFilterClicked);
   // useEffect(() => {
   //   if (startDate && endDate) {
   //     onFilterDateSelected(new Date(startDate).toISOString(), new Date(endDate).toISOString());
@@ -108,6 +117,24 @@ export default function ListToolbar({
         </Tooltip>
       ) : (
         <>
+          {isFilterClicked ? (
+            <>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <Grid container direction="row" spacing={3}>
+                  <Grid item marginLeft={3}>
+                    <DateTimePicker
+                      inputFormat="MM-YYYY"
+                      views={['year', 'month']}
+                      label="Month and Year"
+                      value={selectedDate}
+                      onChange={handleDateChange}
+                      renderInput={(params) => <TextField {...params} />}
+                    />
+                  </Grid>
+                </Grid>
+              </LocalizationProvider>
+            </>
+          ) : null}
           <div style={{ display: 'flex' }}>
             {isFilter ? (
               <Tooltip title="Filter list">

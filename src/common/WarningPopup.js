@@ -1,7 +1,7 @@
 import { Box, Button, Grid, Modal, TextField, Typography } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import * as yup from 'yup';
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import { useFormik } from 'formik';
 import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
