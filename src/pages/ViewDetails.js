@@ -198,6 +198,32 @@ export default function ViewDetails() {
 
             data.orderCreator = referenceData;
           }
+          if (data.products) {
+            // eslint-disable-next-line no-plusplus
+            for (let i = 0; i < data.products.length; i++) {
+              // console.log('data.products.', data.products[i].productRefrence.path);
+              const referenceDoc = doc(firestore, data.products[i].productRefrence.path);
+              // eslint-disable-next-line no-await-in-loop
+              const referenceDocSnap = await getDoc(referenceDoc);
+              const referenceData = referenceDocSnap.data();
+              // console.log('referenceData', referenceData);
+
+              data.products[i].productRefrence = referenceData;
+            }
+          }
+          if (data.products) {
+            // eslint-disable-next-line no-plusplus
+            for (let i = 0; i < data.products.length; i++) {
+              // console.log('data.products.', data.products[i].productRefrence.path);
+              const referenceDoc = doc(firestore, data.products[i].variationRefrence.path);
+              // eslint-disable-next-line no-await-in-loop
+              const referenceDocSnap = await getDoc(referenceDoc);
+              const referenceData = referenceDocSnap.data();
+              // console.log('referenceData', referenceData);
+
+              data.products[i].variationRefrence = referenceData;
+            }
+          }
 
           // results.push(data);
           results.push({ id, ...data });
@@ -278,153 +304,157 @@ export default function ViewDetails() {
           DistributorRefrence,
           OrderDate,
           orderCreator,
-          status,
+          products,
           totalAfterDiscount,
           totalBeforeDiscount,
         } = row;
         // eslint-disable-next-line no-lone-blocks
         {
-          console.log('Data gathered', BuyerRefrence?.BuyerName);
-        }
-        // eslint-disable-next-line no-lone-blocks
-        {
-          /* const selectedUser = selected.indexOf(row?.OrderId) !== -1; */
+          console.log('Data products', products);
         }
 
         return (
           <>
-            <Grid container px={3}>
-              <Grid item xs={12}>
-                <Typography variant="h4">Buyers Details</Typography>
+            <Grid container px={20} style={{ width: '100%', color: '#757575 ' }}>
+              <Grid item xs={12} mb={1}>
+                <Typography variant="h6" style={{ color: '', fontWeight: '700' }}>
+                  Buyers Details
+                </Typography>
               </Grid>
-              <div key={OrderId}>
-                {/* Render the data or components here */}
-                <Grid item xs={12}>
-                  <Typography>Buyers Name : {BuyerRefrence?.BuyerName}</Typography>
-                  {console.log('Buyers Details : ', data)}
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Buyers Contact : {BuyerRefrence?.ContactNumber}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Buyers Address : {BuyerRefrence?.Address}</Typography>
-                </Grid>
-                <Grid item xs={12} mt={5}>
-                  <Typography variant="h4">Distributor Details</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Distributor Name : {DistributorRefrence?.VendorName}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Distributor Contact : {DistributorRefrence?.DistrbutorContactNumber}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Distributor Address : {DistributorRefrence?.Address}</Typography>
-                </Grid>
-                <Grid item xs={12} mt={10}>
-                  <Typography variant="h3">Products</Typography>
-                </Grid>
-                <div
-                  style={{
-                    display: 'flex',
-                    flex: 1,
-                    border: '1px solid',
-                    borderRadius: '5px',
-                    margin: '25px',
-                    padding: '25px',
-                    width: '100%',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Grid item xs={12} mt={0}>
-                    <Typography>Flexi+</Typography>
-                  </Grid>
-                  <Grid item xs={12} mt={0}>
-                    <Typography>90 tabs (₹1500)</Typography>
-                  </Grid>
-                  <Grid item xs={12} mt={0}>
-                    <Typography>Qty:2</Typography>
-                    <Typography>Discount: 5%</Typography>
-                  </Grid>
-                  <Grid item xs={12} mt={0}>
-                    <Typography>₹3000</Typography>
-                    <Typography>Item Total: 2850</Typography>
-                  </Grid>
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    border: '1px solid',
-                    borderRadius: '5px',
-                    margin: '25px',
-                    padding: '25px',
-                    width: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Grid item xs={12} mt={0}>
-                    <Typography>Livo+</Typography>
-                  </Grid>
-                  <Grid item xs={12} mt={0}>
-                    <Typography>150ml (₹270)</Typography>
-                  </Grid>
-                  <Grid item xs={12} mt={0}>
-                    <Typography>Qty:3</Typography>
-                    <Typography>Discount: 10%</Typography>
-                  </Grid>
-                  <Grid item xs={12} mt={0}>
-                    <Typography>₹810</Typography>
-                    <Typography>Item Total: 729</Typography>
-                  </Grid>
-                </div>
-                <Grid item xs={12} mt={2}>
-                  <Typography style={{ fontSize: '25px', fontWeight: '800' }}>
-                    Total Before Discount : {totalBeforeDiscount}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} mt={0}>
-                  <Typography style={{ fontSize: '25px', fontWeight: '800' }}>
-                    Total After Discount : {totalAfterDiscount}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>order ID : {OrderId}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Order Date : {getFormattedDate(OrderDate)}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography>Sales Person : {orderCreator.display_name}</Typography>
-                </Grid>
+              <Grid item xs={12}>
+                <Typography>Buyers Name : {BuyerRefrence?.BuyerName}</Typography>
+                {console.log('Buyers Details : ', data)}
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Buyers Contact : {BuyerRefrence?.ContactNumber}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Buyers Address : {BuyerRefrence?.Address}</Typography>
+              </Grid>
+              <Grid item xs={12} mt={7} mb={1}>
+                <Typography variant="h6" style={{ color: '', fontWeight: '700' }}>
+                  Distributor Details
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Distributor Name : {DistributorRefrence?.VendorName}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Distributor Contact : {DistributorRefrence?.DistrbutorContactNumber}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Distributor Address : {DistributorRefrence?.Address}</Typography>
+              </Grid>
+              <Grid item xs={12} mt={10} mb={3}>
+                <Typography variant="h3" style={{ color: 'rgb(168, 114, 154)', fontWeight: '400' }}>
+                  Products
+                </Typography>
+              </Grid>
 
-                <Grid
-                  item
-                  xs={12}
-                  mt={5}
-                  py={3}
-                  style={{
-                    backgroundColor: '#ff5003',
-                  }}
-                >
+              {products.map((product, index) => {
+                const {
+                  DiscountedPrice,
+                  percentDiscount,
+                  pricePerUnit,
+                  quantity,
+                  totalBeforeDiscount,
+                  productRefrence,
+                  variationRefrence,
+                } = product;
+
+                console.log('index', index);
+                console.log('line', productRefrence.ProductName);
+                return (
                   <div
+                    key={index}
                     style={{
                       display: 'flex',
-                      flex: '1',
+                      border: '2px solid',
+                      borderRadius: '5px',
+                      borderColor: '#e5e5e5',
+                      // #c8c8c8
+                      // margin: '25px',
+                      marginTop: '25px',
+                      padding: '20px',
+                      width: '100%',
                       alignItems: 'center',
-                      justifyContent: 'end',
-                      paddingRight: '20px',
-                      color: 'white',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Typography style={{ fontSize: '15px', fontWeight: '500' }}>
-                      Total : {totalAfterDiscount}
-                    </Typography>
-                    {/* <Typography style={{ fontSize: '25px', fontWeight: '600' }}></Typography> */}
+                    <Grid item xs={12} mt={0}>
+                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                        {productRefrence.ProductName}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} mt={0}>
+                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                        {variationRefrence.variationName} (₹{pricePerUnit})
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} mt={0}>
+                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                        Qty: {quantity}
+                        <br />
+                      </Typography>
+                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                        Discount: {percentDiscount}%
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} mt={0}>
+                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                        ₹{totalBeforeDiscount}
+                      </Typography>
+                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                        Item Total: ₹{DiscountedPrice}
+                      </Typography>
+                    </Grid>
                   </div>
-                </Grid>
-              </div>
+                );
+              })}
+
+              <Grid item xs={12} mt={3}>
+                <Typography style={{ fontWeight: '700' }}>Total Before Discount : ₹{totalBeforeDiscount}</Typography>
+              </Grid>
+              <Grid item xs={12} mt={1} mb={2}>
+                <Typography style={{ fontWeight: '700' }}>Total After Discount : ₹{totalAfterDiscount}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Order ID : {params.id}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Order Date : {getFormattedDate(OrderDate)}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography>Sales Person : {orderCreator.display_name}</Typography>
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                mt={5}
+                py={5}
+                style={{
+                  backgroundColor: 'rgb(255, 80, 3)',
+                  // borderRadius: '10px',
+                  borderBottomLeftRadius: '10px',
+                  borderBottomRightRadius: '10px  ',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flex: '1',
+                    alignItems: 'center',
+                    justifyContent: 'end',
+                    paddingRight: '20px',
+                    color: 'white',
+                  }}
+                >
+                  <Typography variant="h2" style={{ fontSize: '2rem', fontWeight: '500' }}>
+                    Total : ₹{totalAfterDiscount}
+                  </Typography>
+                  {/* <Typography style={{ fontSize: '25px', fontWeight: '600' }}></Typography> */}
+                </div>
+              </Grid>
             </Grid>
           </>
         );
