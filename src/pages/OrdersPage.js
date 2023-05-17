@@ -104,8 +104,6 @@ export default function OrdersPage() {
     setOpen(null);
   };
   const handleViewPopUpClick = () => {
-    console.log('popup');
-    console.log(selectedRow);
     navigate(`/orders/${selectedRow.id}`);
   };
 
@@ -159,13 +157,56 @@ export default function OrdersPage() {
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
+  // const fetchData = async () => {
+  //   const querySnapshot = await getDocs(collection(db, 'Orders'));
+  //   const results = [];
+
+  //   // console.log('DATA :', querySnapshot);
+  //   await Promise.all(
+  //     querySnapshot.docs.map(async (doc) => {
+  //       const data = doc.data();
+  //       const id = doc.id;
+
+  //       if (data.status) {
+  //         if (data.BuyerRefrence) {
+  //           const referenceDoc = doc(db, data.BuyerRefrence.path);
+  //           const referenceDocSnap = await getDoc(referenceDoc);
+  //           const referenceData = referenceDocSnap.data();
+
+  //           data.BuyerRefrence = referenceData;
+  //         }
+  //         if (data.DistributorRefrence) {
+  //           const referenceDoc = doc(db, data.DistributorRefrence.path);
+  //           const referenceDocSnap = await getDoc(referenceDoc);
+  //           const referenceData = referenceDocSnap.data();
+
+  //           data.DistributorRefrence = referenceData;
+  //         }
+  //         if (data.orderCreator) {
+  //           const referenceDoc = doc(db, data.orderCreator.path);
+  //           const referenceDocSnap = await getDoc(referenceDoc);
+  //           const referenceData = referenceDocSnap.data();
+
+  //           data.orderCreator = referenceData;
+  //         }
+
+  //         results.push({ id, ...data });
+  //       }
+  //     })
+  //   );
+  //   setOrders(results);
+  // };
+
+  // ################################################
   const fetchData = async () => {
     const querySnapshot = await getDocs(collection(db, 'Orders'));
     const results = [];
-    // eslint-disable-next-line no-restricted-syntax
+
+    // console.log('DATA :', querySnapshot);
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
+        const id = element.id;
         if (data.status) {
           if (data.BuyerRefrence) {
             const referenceDoc = doc(db, data.BuyerRefrence.path);
@@ -189,11 +230,14 @@ export default function OrdersPage() {
             data.orderCreator = referenceData;
           }
 
-          results.push(data);
+          // results.push(data);
+          results.push({ id, ...data });
+          // spread operator
         }
       })
     );
     setOrders(results);
+    console.log('resultsasdas ', results);
   };
 
   const getFormattedDate = (orderDate) => {
@@ -260,19 +304,14 @@ export default function OrdersPage() {
                         {/* <TableCell padding="checkbox">
                           <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, row?.OrderId)} />
                         </TableCell> */}
-
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
                             {BuyerRefrence?.BuyerName}
                           </Typography>
                         </TableCell>
-
                         <TableCell align="left">{DistributorRefrence?.VendorName}</TableCell>
-
                         <TableCell align="left">{totalAfterDiscount}</TableCell>
-
                         <TableCell align="left">{getFormattedDate(OrderDate)}</TableCell>
-
                         <TableCell align="left">
                           {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}
                           {status}
