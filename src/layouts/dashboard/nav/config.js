@@ -21,7 +21,11 @@ const navConfig = [
     path: '/orders',
     icon: icon('ic_orders'),
   },
- 
+  {
+    title: 'Attendance',
+    path: '/attendance',
+    icon: icon('ic_attendance'),
+  },
 ];
 
 export default navConfig;

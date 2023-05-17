@@ -55,6 +55,7 @@ export default function ListHead({
             key={headCell.id}
             align={headCell.alignRight ? 'right' : 'left'}
             sortDirection={orderBy === headCell.id ? order : false}
+            style={headCell?.cellStyles ? headCell?.cellStyles : {}}
           >
             <TableSortLabel
               hideSortIcon

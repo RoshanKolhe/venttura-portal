@@ -26,10 +26,14 @@ import {
   TableContainer,
   TablePagination,
   TextField,
+  Modal,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 // components
+import CustomBox from '../common/CustomBox';
+import NewGoalForm from '../components/newGoalForm/NewGoalForm';
+import { getCurrentMonthAndYear } from '../utils/constants';
 import { app } from '../firebase_setup/firebase';
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
@@ -73,7 +77,10 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user.name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(
+      array,
+      (_user) => _user.productrefrence.productRefrence?.ProductName.toLowerCase().indexOf(query.toLowerCase()) !== -1
+    );
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -93,12 +100,19 @@ export default function GolasPage() {
   const [open, setOpen] = useState(null);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
+  const [msg, setMsg] = useState('');
+  const [openModal, setOpenMdal] = useState(false);
   const params = useParams();
   const [selectedRow, setSelectedRow] = useState();
   const [goalQuantity, setGoalQuantity] = useState(0);
   const [usersGoalsData, setUserGoalsData] = useState([]);
+  const [userAllGoals, setUserAllGoals] = useState([]);
   const [updateStateData, setUpdateStateData] = useState([]);
   const [order, setOrder] = useState('asc');
+
+  const handleOpen = () => setOpenMdal(true);
+
+  const handleClose = () => setOpenMdal(false);
 
   const [selected, setSelected] = useState([]);
 
@@ -107,7 +121,11 @@ export default function GolasPage() {
   const [filterName, setFilterName] = useState('');
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [openSnackBar, setOpenSnackBar] = useState(false);
 
+  const handleOpenSnackBar = () => setOpenSnackBar(true);
+  const handleCloseSnackBar = () => setOpenSnackBar(false);
+  const [currentMonthAndYear, setCurrentMonthAndYear] = useState(getCurrentMonthAndYear());
   const db = getFirestore(app);
   const classes = useStyles();
   const handleOpenMenu = (event, row) => {
@@ -123,7 +141,6 @@ export default function GolasPage() {
     console.log(selectedRow);
     navigate(`/orders/${selectedRow.id}`);
   };
-
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -152,7 +169,6 @@ export default function GolasPage() {
     setPage(0);
     setFilterName(event.target.value);
   };
-
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - usersGoalsData.length) : 0;
 
   const filteredUsers = applySortFilter(usersGoalsData, getComparator(order, orderBy), filterName);
@@ -165,16 +181,19 @@ export default function GolasPage() {
       if (data.goals) {
         const filteredData = [];
         let i = 0;
-        data.goals.forEach((res) => {
+        const currentMonthGoals = data.goals.find((obj) =>
+          Object.prototype.hasOwnProperty.call(obj, currentMonthAndYear)
+        )[currentMonthAndYear];
+        currentMonthGoals.forEach((res) => {
           filteredData.push({
             ...res,
             id: i,
           });
           i++;
         });
-        console.log('filteredData', filteredData);
+
         setUpdateStateData(filteredData);
-        const promises = data.goals.map(async (reference) => {
+        const promises = currentMonthGoals.map(async (reference) => {
           const referenceDocRef = doc(db, 'Variation', reference.productrefrence.id);
           const referenceDocSnap = await getDoc(referenceDocRef);
           if (referenceDocSnap.exists()) {
@@ -202,24 +221,29 @@ export default function GolasPage() {
       return data;
     },
   };
+
   const fetchData = async () => {
     try {
       const docRef = doc(db, 'users', params.id).withConverter(customConverter);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
+        console.log(data);
         data.then((res) => {
           if (res.goals && res.goals.length) {
+            setUserAllGoals(res.goals);
+            const currentMonthGoals = res.goals.find((obj) =>
+              Object.prototype.hasOwnProperty.call(obj, currentMonthAndYear)
+            )[currentMonthAndYear];
             const filteredData = [];
             let i = 0;
-            res.goals.forEach((res) => {
+            currentMonthGoals.forEach((res) => {
               filteredData.push({
                 ...res,
                 id: i,
               });
               i++;
             });
-            console.log('filteredData', filteredData);
             setUserGoalsData(filteredData);
           }
         });
@@ -233,11 +257,13 @@ export default function GolasPage() {
   };
 
   const handleGoalUpdate = async (e, row) => {
+    console.log(userAllGoals);
+    const userAllGoalsData = userAllGoals;
     const docRef = doc(db, 'users', params?.id);
-    console.log(updateStateData);
     const updatedData = updateStateData.map(({ id, ...rest }) => rest);
+
     const newUser = {
-      goals: updatedData,
+      goals: [{ [currentMonthAndYear]: updatedData }],
     };
     console.log(newUser);
     await updateDoc(docRef, newUser);
@@ -245,6 +271,7 @@ export default function GolasPage() {
 
   const handleItemChanged = (e, row, targetField) => {
     const foundIndex = usersGoalsData.findIndex((x) => x.id === row.id);
+    console.log(foundIndex);
     const rowData = usersGoalsData[foundIndex];
     const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value) };
     const updatedFilteredGoals = usersGoalsData.map((item, index) => {
@@ -258,10 +285,12 @@ export default function GolasPage() {
       return { ...item };
     });
     console.log('updatedStateGoals', updatedStateGoals);
+    console.log('updatedFilteredGoals', updatedFilteredGoals);
+
     setUpdateStateData(updatedStateGoals);
     setUserGoalsData(updatedFilteredGoals);
   };
-  console.log('usersGoalsData', usersGoalsData);
+
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
@@ -286,7 +315,13 @@ export default function GolasPage() {
           <Typography variant="h4" gutterBottom>
             Goals
           </Typography>
-          <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
+          <Button
+            variant="contained"
+            startIcon={<Iconify icon="eva:plus-fill" />}
+            onClick={() => {
+              handleOpen();
+            }}
+          >
             New Goals
           </Button>
         </Stack>
@@ -358,7 +393,7 @@ export default function GolasPage() {
                   )}
                 </TableBody>
 
-                {isNotFound && (
+                {isNotFound && usersGoalsData.length === 0 && (
                   <TableBody>
                     <TableRow>
                       <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
@@ -395,6 +430,25 @@ export default function GolasPage() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
+        <Modal
+          open={openModal}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <CustomBox>
+            <NewGoalForm
+              handleClose={handleClose}
+              onDataSubmit={(msg) => {
+                handleClose();
+                fetchData();
+                setMsg(msg);
+                handleOpenSnackBar();
+              }}
+              initialValues={selectedRow}
+            />
+          </CustomBox>
+        </Modal>
       </Container>
 
       <Popover

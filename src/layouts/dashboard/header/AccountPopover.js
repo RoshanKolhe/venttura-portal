@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
@@ -6,7 +6,7 @@ import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover 
 import { getAuth, signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import account from '../../../_mock/account';
-
+import { FirebaseContext } from '../../../firebase_setup/firebase';
 // ----------------------------------------------------------------------
 
 const MENU_OPTIONS = [
@@ -29,6 +29,9 @@ const MENU_OPTIONS = [
 export default function AccountPopover() {
   const [open, setOpen] = useState(null);
   const auth = getAuth();
+  const user = JSON.parse(localStorage.getItem('user'));
+  const data = useContext(FirebaseContext);
+
   const navigate = useNavigate();
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
@@ -40,6 +43,7 @@ export default function AccountPopover() {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
+        localStorage.removeItem('user');
         navigate('/login', { replace: true });
       })
       .catch((error) => {
@@ -91,10 +95,10 @@ export default function AccountPopover() {
       >
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {account.displayName}
+            {user?.display_name}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {account.email}
+            {user?.email}
           </Typography>
         </Box>
 

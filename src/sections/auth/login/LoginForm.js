@@ -21,7 +21,8 @@ import { Link as RouterLink, Link, useNavigate } from 'react-router-dom';
 
 import * as Yup from 'yup';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import app from '../../../firebase_setup/firebase';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { app } from '../../../firebase_setup/firebase';
 import CommonSnackBar from '../../../common/CommonSnackBar';
 
 // ----------------------------------------------------------------------
@@ -32,6 +33,7 @@ export default function LoginForm() {
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const auth = getAuth();
+  const db = getFirestore(app);
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
   const LoginSchema = Yup.object().shape({
@@ -56,6 +58,22 @@ export default function LoginForm() {
     onSubmit: async (values) => {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        const docRef = doc(db, 'users', userCredential?.user?.uid); // Replace 'yourCollectionName' with the name of your collection
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.permissions && data.permissions.includes('admin')) {
+            localStorage.setItem('user', JSON.stringify(data));
+            navigate('/dashboard', { replace: true });
+          } else {
+            localStorage.removeItem('user');
+            setErrorMessage('Not Enough Permissions');
+            handleOpenSnackBar();
+          }
+        } else {
+          console.error('No such document!');
+        }
       } catch (error) {
         setErrorMessage(error);
         handleOpenSnackBar();
