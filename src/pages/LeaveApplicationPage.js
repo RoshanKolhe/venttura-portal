@@ -1,14 +1,17 @@
+/* eslint-disable camelcase */
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
+import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore';
 // @mui
 import {
   Card,
   Table,
   Stack,
   Paper,
+  Chip,
   Avatar,
   Button,
   Popover,
@@ -23,7 +26,10 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
+import DoneIcon from '@mui/icons-material/Done';
+import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
+import { app } from '../firebase_setup/firebase';
 // components
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
@@ -33,12 +39,13 @@ import Scrollbar from '../components/scrollbar';
 // mock
 
 // ----------------------------------------------------------------------
-
+const firestore = getFirestore(app);
 const TABLE_HEAD = [
-  { id: 'store_vet', label: 'Store/Vet', alignRight: false },
-  { id: 'distributor', label: 'Distributor', alignRight: false },
-  { id: 'total', label: 'Total', alignRight: false },
-  { id: 'date', label: 'Date', alignRight: false },
+  { id: 'store_vet', label: 'Name', alignRight: false },
+  { id: 'distributor', label: 'Email', alignRight: false },
+  { id: 'total', label: 'Start Date ', alignRight: false },
+  { id: 'date', label: 'End Date', alignRight: false },
+  { id: 'Reason', label: 'Reason', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
   { id: '' },
 ];
@@ -68,8 +75,9 @@ function applySortFilter(array, comparator, query) {
     if (order !== 0) return order;
     return a[1] - b[1];
   });
+  console.log('query', query);
   if (query) {
-    return filter(array, (_user) => _user?.BuyerRefrence.BuyerName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user?.creator.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -103,8 +111,41 @@ export default function OrdersPage() {
   const handleCloseMenu = () => {
     setOpen(null);
   };
-  const handleViewPopUpClick = () => {
-    navigate(`/orders/${selectedRow.id}`);
+  const handleChangeStatusApprove = (e, selectedRow) => {
+    // console.log('Application state changed Approve Event', e);
+    // console.log('Application state changed Approve ', selectedRow);
+    const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
+
+    const newUser = {
+      isApproved: 1,
+    };
+    updateDoc(docRef, newUser)
+      .then(() => {
+        console.log('Application state changed to Approve', selectedRow);
+        fetchData();
+        handleCloseMenu();
+      })
+      .catch((error) => {
+        console.error('Error updating document:', error);
+      });
+  };
+  const handleChangeStatusReject = (e, selectedRow) => {
+    // console.log('Application state changed Reject Event', e);
+    // console.log('Application state changed Reject ', selectedRow);
+    const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
+
+    const newUser = {
+      isApproved: 2,
+    };
+    updateDoc(docRef, newUser)
+      .then(() => {
+        console.log('Application state changed to Rejected', selectedRow);
+        fetchData();
+        handleCloseMenu();
+      })
+      .catch((error) => {
+        console.error('Error updating document:', error);
+      });
   };
 
   const handleRequestSort = (event, property) => {
@@ -150,6 +191,10 @@ export default function OrdersPage() {
     setPage(0);
     setFilterName(event.target.value);
   };
+  const handleOnReload = (event) => {
+    fetchData();
+    console.log('OnReload');
+  };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orders.length) : 0;
 
@@ -157,87 +202,33 @@ export default function OrdersPage() {
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
-  // const fetchData = async () => {
-  //   const querySnapshot = await getDocs(collection(db, 'Orders'));
-  //   const results = [];
-
-  //   // console.log('DATA :', querySnapshot);
-  //   await Promise.all(
-  //     querySnapshot.docs.map(async (doc) => {
-  //       const data = doc.data();
-  //       const id = doc.id;
-
-  //       if (data.status) {
-  //         if (data.BuyerRefrence) {
-  //           const referenceDoc = doc(db, data.BuyerRefrence.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.BuyerRefrence = referenceData;
-  //         }
-  //         if (data.DistributorRefrence) {
-  //           const referenceDoc = doc(db, data.DistributorRefrence.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.DistributorRefrence = referenceData;
-  //         }
-  //         if (data.orderCreator) {
-  //           const referenceDoc = doc(db, data.orderCreator.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.orderCreator = referenceData;
-  //         }
-
-  //         results.push({ id, ...data });
-  //       }
-  //     })
-  //   );
-  //   setOrders(results);
-  // };
-
   // ################################################
   const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'Orders'));
+    const querySnapshot = await getDocs(collection(db, 'leaveApplication'));
     const results = [];
 
-    console.log('Orders Snapshot :', querySnapshot);
+    console.log('leaveApplication Snapshot :', querySnapshot);
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
+        console.log('DATA :', data);
         const id = element.id;
-        if (data.status) {
-          if (data.BuyerRefrence) {
-            const referenceDoc = doc(db, data.BuyerRefrence.path);
+        if (data.creator) {
+          if (data.creator) {
+            const referenceDoc = doc(db, data.creator.path);
             const referenceDocSnap = await getDoc(referenceDoc);
             const referenceData = referenceDocSnap.data();
 
-            data.BuyerRefrence = referenceData;
-          }
-          if (data.DistributorRefrence) {
-            const referenceDoc = doc(db, data.DistributorRefrence.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
-
-            data.DistributorRefrence = referenceData;
-          }
-          if (data.orderCreator) {
-            const referenceDoc = doc(db, data.orderCreator.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
-
-            data.orderCreator = referenceData;
+            data.creator = referenceData;
           }
 
-          // results.push(data);
           results.push({ id, ...data });
           // spread operator
         }
       })
     );
     setOrders(results);
-    console.log('Orders ', results);
+    console.log('Leave ', results);
   };
 
   const getFormattedDate = (orderDate) => {
@@ -256,13 +247,13 @@ export default function OrdersPage() {
   return (
     <>
       <Helmet>
-        <title> Orders | Admin </title>
+        <title> Leave Applications | Admin </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Orders
+            Leave Applications
           </Typography>
           {/* <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
@@ -270,7 +261,12 @@ export default function OrdersPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleOnReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
@@ -288,33 +284,54 @@ export default function OrdersPage() {
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                     const {
-                      OrderId,
-                      BuyerRefrence,
-                      DistributorRefrence,
-                      OrderDate,
-                      orderCreator,
-                      status,
-                      totalAfterDiscount,
-                      totalBeforeDiscount,
+                      uid,
+                      creator,
+                      dateCreated,
+                      endDate,
+                      reaseon,
+                      startDate,
+                      display_name,
+                      email,
+                      isApproved,
+                      city,
                     } = row;
-                    const selectedUser = selected.indexOf(row?.OrderId) !== -1;
+
+                    const selectedUser = selected.indexOf(row?.dateCreated) !== -1;
 
                     return (
-                      <TableRow hover key={row?.OrderId} tabIndex={-1} role="checkbox" selected={selectedUser}>
+                      <TableRow hover key={row?.dateCreated} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
-                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, row?.OrderId)} />
+                          <Checkbox checked={selectedUser} onChange={(Reject) => handleClick(event, row?.OrderId)} />
                         </TableCell> */}
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {BuyerRefrence?.BuyerName}
+                            {creator?.display_name}
                           </Typography>
                         </TableCell>
-                        <TableCell align="left">{DistributorRefrence?.VendorName}</TableCell>
-                        <TableCell align="left">{totalAfterDiscount}</TableCell>
-                        <TableCell align="left">{getFormattedDate(OrderDate)}</TableCell>
+                        <TableCell align="left">{creator?.email}</TableCell>
+                        <TableCell align="left">{getFormattedDate(startDate)}</TableCell>
+                        <TableCell align="left">{getFormattedDate(endDate)}</TableCell>
+                        <TableCell align="left">{reaseon}</TableCell>
+                        {/* <TableCell align="left">{isApproved}</TableCell> */}
+
                         <TableCell align="left">
+                          {isApproved === 0 && (
+                            <Chip label="Pending" style={{ backgroundColor: 'rgb(255 206 19)', color: 'white' }} />
+                          )}
+                          {isApproved === 1 && (
+                            <Chip label="Approved" style={{ backgroundColor: '#5cb85c', color: 'white' }} />
+                          )}
+                          {isApproved === 2 && (
+                            <Chip label="Rejected" style={{ backgroundColor: '#d9534f', color: 'white' }} />
+                          )}
+                        </TableCell>
+                        <TableCell align="left">
+                          {/* label="Approved"
+                            style={{ backgroundColor: isApproved === 0 ? 'rgb(255, 72, 66)' : '',
+                              color: 'black',
+                            }} */}
                           {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}
-                          {status}
+                          {/* {status} */}
                         </TableCell>
 
                         <TableCell align="right">
@@ -395,9 +412,23 @@ export default function OrdersPage() {
           },
         }}
       >
-        <MenuItem onClick={() => handleViewPopUpClick()}>
-          <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          View
+        <MenuItem onClick={(e) => handleChangeStatusApprove(e, selectedRow)}>
+          <DoneIcon sx={{ mr: 2, color: 'success.main' }} />
+          {/* <Icon
+            icon="material-symbols:order-approve-sharp"
+            style={{ marginRight: '5px' }}
+            sx={{ color: 'success.main' }}
+          /> */}
+          Approve
+        </MenuItem>
+        <MenuItem onClick={(e) => handleChangeStatusReject(e, selectedRow)}>
+          <CloseIcon sx={{ mr: 2, color: 'error.main' }} />
+          {/* <Icon
+            icon="fluent:text-change-reject-24-filled"
+            style={{ marginRight: '5px' }}
+            sx={{ color: 'error.main' }}
+          /> */}
+          Reject
         </MenuItem>
 
         {/* <MenuItem sx={{ color: 'error.main' }}>

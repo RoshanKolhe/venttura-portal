@@ -22,6 +22,11 @@ const navConfig = [
     icon: icon('ic_orders'),
   },
   {
+    title: 'Leave Applications',
+    path: '/leaveapplications',
+    icon: icon('ic_leave'),
+  },
+  {
     title: 'Attendance',
     path: '/attendance',
     icon: icon('ic_attendance'),
