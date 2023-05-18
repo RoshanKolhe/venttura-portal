@@ -179,9 +179,10 @@ export default function GolasPage() {
   const customConverter = {
     fromFirestore: async function (snapshot, options) {
       const data = snapshot.data(options);
-      if (data.goals) {
+      if (data.goals && data.goals.length > 0) {
         const filteredData = [];
         let i = 0;
+        console.log(data.goals);
         const currentMonthGoals = data.goals.find((obj) =>
           Object.prototype.hasOwnProperty.call(obj, currentMonthAndYear)
         )[currentMonthAndYear];
@@ -229,7 +230,7 @@ export default function GolasPage() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         data.then((res) => {
-          if (res.goals && res.goals.length) {
+          if (res.goals && res.goals.length > 0) {
             setUserAllGoals(res.goals);
             console.log(currentMonthAndYear);
             const currentMonthGoals = res.goals.find((obj) =>
@@ -252,6 +253,7 @@ export default function GolasPage() {
       setUserGoalsData([]);
       console.error('No such document!');
     } catch (error) {
+      setUserGoalsData([]);
       console.error('Error getting document: ', error);
     }
   };
@@ -261,12 +263,11 @@ export default function GolasPage() {
     const userAllGoalsData = userAllGoals;
     const docRef = doc(db, 'users', params?.id);
     const updatedData = updateStateData.map(({ id, ...rest }) => rest);
-
-    const newUser = {
-      goals: [{ [currentMonthAndYear]: updatedData }],
-    };
-    console.log(newUser);
-    await updateDoc(docRef, newUser);
+    console.log(updatedData);
+    const userNewGoals = userAllGoals.map((res) => ({ ...res, [currentMonthAndYear]: updatedData }));
+    const inputData = { goals: userNewGoals };
+    console.log(inputData);
+    await updateDoc(docRef, inputData);
   };
 
   const handleItemChanged = (e, row, targetField) => {
@@ -305,7 +306,7 @@ export default function GolasPage() {
     console.log(date);
     setCurrentMonthAndYear(`${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`);
     fetchData();
-  }, [selectedDate]);
+  }, [selectedDate, currentMonthAndYear]);
 
   useEffect(() => {
     fetchData();
