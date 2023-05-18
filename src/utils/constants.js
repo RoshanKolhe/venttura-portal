@@ -12,12 +12,13 @@ export function useUserRoles() {
 export const variationJson = async () => {
   const querySnapshot = await getDocs(collection(firestore, 'Variation'));
   const results = [];
-  querySnapshot.docs.map(async (element) => {
+  querySnapshot.docs.forEach((element) => {
     results.push({
       quantity: 0,
       totalAmount: 0.0,
       goalQuantity: 0,
       productrefrence: element.ref,
+      actualReference: element.ref,
       id: element.id,
     });
   });
@@ -48,7 +49,7 @@ export function getDatesInRange(startDate, endDate) {
   return dates;
 }
 
-export function getCurrentMonthAndYear(){
+export function getCurrentMonthAndYear() {
   const currentDate = new Date();
   const year = currentDate.getFullYear();
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');

@@ -109,6 +109,7 @@ export default function GolasPage() {
   const [userAllGoals, setUserAllGoals] = useState([]);
   const [updateStateData, setUpdateStateData] = useState([]);
   const [order, setOrder] = useState('asc');
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const handleOpen = () => setOpenMdal(true);
 
@@ -191,7 +192,6 @@ export default function GolasPage() {
           });
           i++;
         });
-
         setUpdateStateData(filteredData);
         const promises = currentMonthGoals.map(async (reference) => {
           const referenceDocRef = doc(db, 'Variation', reference.productrefrence.id);
@@ -228,10 +228,10 @@ export default function GolasPage() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        console.log(data);
         data.then((res) => {
           if (res.goals && res.goals.length) {
             setUserAllGoals(res.goals);
+            console.log(currentMonthAndYear);
             const currentMonthGoals = res.goals.find((obj) =>
               Object.prototype.hasOwnProperty.call(obj, currentMonthAndYear)
             )[currentMonthAndYear];
@@ -301,9 +301,15 @@ export default function GolasPage() {
   };
 
   useEffect(() => {
+    const date = new Date(selectedDate);
+    console.log(date);
+    setCurrentMonthAndYear(`${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`);
+    fetchData();
+  }, [selectedDate]);
+
+  useEffect(() => {
     fetchData();
   }, [params.id]);
-
   return (
     <>
       <Helmet>
@@ -332,6 +338,8 @@ export default function GolasPage() {
             numSelected={selected.length}
             filterName={filterName}
             onFilterName={handleFilterByName}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
           />
 
           <Scrollbar>

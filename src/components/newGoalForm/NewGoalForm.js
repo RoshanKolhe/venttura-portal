@@ -1,3 +1,6 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable object-shorthand */
 import React, { useState, useEffect } from 'react';
 import { Field, useFormik } from 'formik';
 import * as yup from 'yup';
@@ -24,27 +27,35 @@ import {
   TableCell,
   TableBody,
   Paper,
+  Modal,
 } from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import closefill from '@iconify/icons-eva/close-fill';
 import { Timestamp, collection, doc, getDoc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 import { LoadingButton } from '@mui/lab';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { getCurrentMonthAndYear, variationJson } from '../../utils/constants';
+import { WarningPopup } from '../../common/WarningPopup';
+import { variationJson } from '../../utils/constants';
 import LoadingScreen from '../../common/LoadingScreen';
 import CustomBox from '../../common/CustomBox';
 import account from '../../_mock/account';
 import CommonSnackBar from '../../common/CommonSnackBar';
 import { app } from '../../firebase_setup/firebase';
+import WarningGoalPopup from '../warningGoalPopup/warningGoalPopup';
 
 const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   const currentDate = new Date();
-  const [selectedDate, setSelectedDate] = useState();
+  const [selectedDate, setSelectedDate] = useState(null);
+  // const [userAllGoals, setUserAllGoals] = useState([]);
+  let userAllGoals = [];
+  const [openModal, setOpenModal] = useState(false);
+
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const [defaultGoals, setDefaultGoals] = useState([]);
   const [goalsWithProductData, setGoalsWithProductData] = useState([]);
   const year = currentDate.getFullYear();
+  const params = useParams();
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const db = getFirestore(app);
   const [errorMessage, setErrorMessage] = useState('');
@@ -55,8 +66,47 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   const handleCloseSnackBar = () => setOpenSnackBar(false);
 
   const goalFormValidationSchema = yup.object({
-    monthAndYear: yup.string('Select month and year').required('Month and year is required'),
+    monthAndYear: yup.string('Select month and year'),
   });
+
+  const checkDateGoalsExists = async (date) => {
+    const updatedDate = new Date(date);
+    const monthAndYear = `${String(updatedDate.getMonth() + 1).padStart(2, '0')}-${updatedDate.getFullYear()}`;
+    const data = await fetchData();
+    return data.some((obj) => Object.prototype.hasOwnProperty.call(obj, monthAndYear));
+  };
+  const handleAddNewGoals = async () => {
+    console.log(defaultGoals);
+    if (userAllGoals.length > 0) {
+      console.log('userAllGoalsstart', userAllGoals);
+      const updatedDate = new Date(selectedDate);
+      const monthAndYear = `${String(updatedDate.getMonth() + 1).padStart(2, '0')}-${updatedDate.getFullYear()}`;
+      const finalGoals = [];
+      defaultGoals.forEach((item) => {
+        const updatedData = {
+          ...item,
+          productrefrence: item.actualReference,
+        };
+        delete updatedData.actualReference;
+        finalGoals.push(updatedData);
+      });
+      console.log('finalGoals', finalGoals);
+      if (finalGoals && finalGoals.length > 0) {
+        console.log('userAllGoalsend', userAllGoals);
+        const userNewGoals = userAllGoals.map((res) => ({ ...res, [monthAndYear]: finalGoals }));
+        console.log('userNewGoals', userNewGoals);
+        const inputData = { goals: userNewGoals };
+
+        const docRef = doc(db, 'users', params.id);
+        console.log(inputData);
+        await updateDoc(docRef, inputData);
+      }
+      setOpenModal(false);
+      onDataSubmit();
+    } else {
+      console.log('none');
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -66,7 +116,12 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
     validationSchema: goalFormValidationSchema,
     onSubmit: async (values) => {
       setLoading(true);
-      console.log(values.monthAndYear);
+      const isExists = await checkDateGoalsExists(selectedDate);
+      if (isExists) {
+        setOpenModal(true);
+      } else {
+        handleAddNewGoals();
+      }
       setLoading(false);
 
       //   onDataSubmit('User created successfully');
@@ -74,7 +129,6 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   });
 
   const handleDateChange = (date) => {
-    console.log('here');
     setSelectedDate(date);
     formik.setFieldValue('monthAndYear', date);
   };
@@ -98,41 +152,77 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
     setGoalsWithProductData(updatedFilteredGoals);
   };
 
+  const handleOkClick = async () => {
+    await fetchData();
+    handleAddNewGoals();
+  };
+  const handleCancelClick = () => {
+    setOpenModal(false);
+  };
+
+  const fetchData = async () => {
+    try {
+      const docRef = doc(db, 'users', params.id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log('user', data);
+        if (data?.goals && data?.goals.length > 0) {
+          userAllGoals = data?.goals;
+          return data?.goals;
+        }
+      }
+      console.error('No such document!');
+    } catch (error) {
+      console.error('Error getting document: ', error);
+    }
+
+    return [];
+  };
   useEffect(() => {
-    variationJson().then(async (res) => {
-      setDefaultGoals(res);
+    const fetchDataVariation = async () => {
+      try {
+        const res = await variationJson();
+        setDefaultGoals(res);
 
-      const data = await Promise.all(
-        res.map(async (reference) => {
-          const referenceDocRef = doc(db, 'Variation', reference.productrefrence.id);
-          const referenceDocSnap = await getDoc(referenceDocRef);
+        const variation = res;
 
-          if (referenceDocSnap.exists()) {
-            reference.productrefrence = referenceDocSnap.data();
+        const filteredData = await Promise.all(
+          variation.map(async (reference) => {
+            const referenceDocRef = doc(db, 'Variation', reference.productrefrence.id);
+            const referenceDocSnap = await getDoc(referenceDocRef);
 
-            if (reference.productrefrence.productRefrence) {
-              const referenceChildDocRef = doc(db, 'Products', reference.productrefrence.productRefrence.id);
-              const referenceDocChildSnap = await getDoc(referenceChildDocRef);
+            if (referenceDocSnap.exists()) {
+              reference.productrefrence = referenceDocSnap.data();
+              const productRefId = reference.productrefrence.productRefrence?.id;
 
-              if (referenceDocChildSnap.exists()) {
-                reference.productrefrence.productRefrence = referenceDocChildSnap.data();
-                return reference;
+              if (productRefId) {
+                const referenceChildDocRef = doc(db, 'Products', productRefId);
+                const referenceDocChildSnap = await getDoc(referenceChildDocRef);
+
+                if (referenceDocChildSnap.exists()) {
+                  reference.productrefrence.productRefrence = referenceDocChildSnap.data();
+                  return reference;
+                }
+                console.log('Child document does not exist!');
               }
-              console.log('Child document does not exist!');
+            } else {
+              console.log('Referenced document does not exist!');
             }
-          } else {
-            console.log('Referenced document does not exist!');
-          }
 
-          return null;
-        })
-      );
+            return null;
+          })
+        );
 
-      const filteredData = data.filter(Boolean); // Remove any null values
-
-      setGoalsWithProductData(filteredData);
-    });
+        const filteredAndNonNullData = filteredData.filter(Boolean);
+        setGoalsWithProductData(filteredAndNonNullData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchDataVariation();
   }, []);
+
   return (
     <div>
       <form onSubmit={formik.handleSubmit} id="goalForm">
@@ -164,7 +254,6 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
                 onChange={handleDateChange}
                 renderInput={(params) => <TextField {...params} style={{ width: '100%' }} />}
               />
-              <FormHelperText error>{formik?.touched?.monthAndYear && formik?.errors?.monthAndYear}</FormHelperText>
             </Grid>
           </LocalizationProvider>
           <Grid item xs={12}>
@@ -222,6 +311,21 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
           severity={errorMessage !== '' ? 'error' : 'success'}
         />
       </form>
+      <Modal
+        open={openModal}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <CustomBox customStyle={{ width: '50%' }}>
+          <WarningGoalPopup
+            isModalOpen={openModal}
+            setIsModalOpen={setOpenModal}
+            handleCancelClick={handleCancelClick}
+            handleOkClick={handleOkClick}
+          />
+        </CustomBox>
+      </Modal>
     </div>
   );
 };
