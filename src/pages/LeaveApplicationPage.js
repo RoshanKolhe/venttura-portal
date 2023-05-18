@@ -75,8 +75,9 @@ function applySortFilter(array, comparator, query) {
     if (order !== 0) return order;
     return a[1] - b[1];
   });
+  console.log('query', query);
   if (query) {
-    return filter(array, (_user) => _user.name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user?.creator.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -201,46 +202,6 @@ export default function OrdersPage() {
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
-  // const fetchData = async () => {
-  //   const querySnapshot = await getDocs(collection(db, 'Orders'));
-  //   const results = [];
-
-  //   // console.log('DATA :', querySnapshot);
-  //   await Promise.all(
-  //     querySnapshot.docs.map(async (doc) => {
-  //       const data = doc.data();
-  //       const id = doc.id;
-
-  //       if (data.status) {
-  //         if (data.BuyerRefrence) {
-  //           const referenceDoc = doc(db, data.BuyerRefrence.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.BuyerRefrence = referenceData;
-  //         }
-  //         if (data.DistributorRefrence) {
-  //           const referenceDoc = doc(db, data.DistributorRefrence.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.DistributorRefrence = referenceData;
-  //         }
-  //         if (data.orderCreator) {
-  //           const referenceDoc = doc(db, data.orderCreator.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.orderCreator = referenceData;
-  //         }
-
-  //         results.push({ id, ...data });
-  //       }
-  //     })
-  //   );
-  //   setOrders(results);
-  // };
-
   // ################################################
   const fetchData = async () => {
     const querySnapshot = await getDocs(collection(db, 'leaveApplication'));
@@ -260,22 +221,7 @@ export default function OrdersPage() {
 
             data.creator = referenceData;
           }
-          //   if (data.DistributorRefrence) {
-          //     const referenceDoc = doc(db, data.DistributorRefrence.path);
-          //     const referenceDocSnap = await getDoc(referenceDoc);
-          //     const referenceData = referenceDocSnap.data();
 
-          //     data.DistributorRefrence = referenceData;
-          //   }
-          //   if (data.orderCreator) {
-          //     const referenceDoc = doc(db, data.orderCreator.path);
-          //     const referenceDocSnap = await getDoc(referenceDoc);
-          //     const referenceData = referenceDocSnap.data();
-
-          //     data.orderCreator = referenceData;
-          //   }
-
-          // results.push(data);
           results.push({ id, ...data });
           // spread operator
         }
