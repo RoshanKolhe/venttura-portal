@@ -23,7 +23,8 @@ import { Icon } from '@iconify/react';
 import closefill from '@iconify/icons-eva/close-fill';
 import { Timestamp, collection, doc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 import { LoadingButton } from '@mui/lab';
-import { variationJson } from '../../utils/constants';
+import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { getCurrentMonthAndYear, variationJson } from '../../utils/constants';
 import LoadingScreen from '../../common/LoadingScreen';
 import CustomBox from '../../common/CustomBox';
 import account from '../../_mock/account';
@@ -33,6 +34,11 @@ import { app } from '../../firebase_setup/firebase';
 const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const currentDate = new Date();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const year = currentDate.getFullYear();
+  const auth = getAuth();
+  const formattedDate = `${month}-${year}`;
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const firestore = getFirestore(app);
   const [errorMessage, setErrorMessage] = useState('');
@@ -65,19 +71,22 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
     validationSchema: userFormValidationSchema,
     onSubmit: async (values) => {
       setLoading(true);
-      const usersRef = collection(firestore, 'users');
       if (!initialValues) {
-        const docRef = doc(usersRef);
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, 'Wolfizer@2023');
+        const usersRef = collection(firestore, 'users');
+        const docRef = doc(usersRef, userCredential.user.uid);
         const allGoals = await variationJson();
+        const currentMonthAndYeaer = getCurrentMonthAndYear();
         const newUser = {
           display_name: values.name,
           email: values.email,
           city: values.city,
-          uid: docRef.id,
+          uid: userCredential.user.uid,
           revenuegenerated: 0.0,
           unitsSold: 0,
           created_time: Timestamp.now(),
-          goals: allGoals,
+          goals: [{ [currentMonthAndYeaer]: allGoals }],
+          currentGoalsMonthAndYear: formattedDate,
         };
         await setDoc(docRef, newUser);
         setLoading(false);

@@ -47,17 +47,11 @@ export default function LoginPage() {
   const mdUp = useResponsive('up', 'md');
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useContext(FirebaseContext);
-  const permissions = localStorage.getItem('permissions');
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
-    if (permissions && permissions.split(',').includes('super_admin')) {
+    if (user && user.permissions && user.permissions.includes('admin')) {
       navigate('/dashboard', { replace: true });
-      return;
-    }
-    if (user) {
-      const { from } = location.state || { from: { pathname: '/dashboard' } };
-      navigate(from, { replace: true });
     }
   }, [user, location, navigate]);
 

@@ -7,7 +7,7 @@ export default function CommonSnackBar(props) {
     openSnackBar: PropTypes.bool,
     handleCloseSnackBar: PropTypes.func,
     msg: PropTypes.string,
-    severity: PropTypes.string
+    severity: PropTypes.string,
     // timestampInfoIcon: PropTypes.string
   };
 

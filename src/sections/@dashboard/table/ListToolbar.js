@@ -64,19 +64,20 @@ export default function ListToolbar({
   onFilterName,
   onApproveSelected,
   onReload,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   showSearch = true,
   isFilter = false,
+  isDateRange = false,
 }) {
-  // const [startDate, setStartDateData] = useState();
-  // const [endDate, setEndDateData] = useState();
-
   const [isFilterClicked, setIsFilterClicked] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const handleDateChange = (date) => {
     setSelectedDate(date); // handle the selected date
   };
-  console.log(isFilterClicked);
   // useEffect(() => {
   //   if (startDate && endDate) {
   //     onFilterDateSelected(new Date(startDate).toISOString(), new Date(endDate).toISOString());
@@ -117,7 +118,7 @@ export default function ListToolbar({
         </Tooltip>
       ) : (
         <>
-          {isFilterClicked ? (
+          {isFilterClicked && !isDateRange ? (
             <>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <Grid container direction="row" spacing={3}>
@@ -134,6 +135,32 @@ export default function ListToolbar({
                 </Grid>
               </LocalizationProvider>
             </>
+          ) : null}
+          {isFilterClicked && isDateRange ? (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Grid container direction="row" spacing={3}>
+                <Grid item marginLeft={3}>
+                  <DateTimePicker
+                    inputFormat="YYYY-MM-DD"
+                    label="Start Date"
+                    value={startDate || null}
+                    onChange={(newValue) => setStartDate(newValue)}
+                    views={['year', 'month', 'day']}
+                    renderInput={(params) => <TextField {...params} autoComplete="off" />}
+                  />
+                </Grid>
+                <Grid item>
+                  <DateTimePicker
+                    inputFormat="YYYY-MM-DD"
+                    views={['year', 'month', 'day']}
+                    label="end Date"
+                    value={endDate || null}
+                    onChange={(newValue) => setEndDate(newValue)}
+                    renderInput={(params) => <TextField {...params} autoComplete="off" />}
+                  />
+                </Grid>
+              </Grid>
+            </LocalizationProvider>
           ) : null}
           <div style={{ display: 'flex' }}>
             {isFilter ? (
