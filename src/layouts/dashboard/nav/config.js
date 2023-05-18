@@ -21,7 +21,11 @@ const navConfig = [
     path: '/orders',
     icon: icon('ic_orders'),
   },
- 
+  {
+    title: 'Leave Applications',
+    path: '/leaveapplications',
+    icon: icon('ic_leave'),
+  },
 ];
 
 export default navConfig;

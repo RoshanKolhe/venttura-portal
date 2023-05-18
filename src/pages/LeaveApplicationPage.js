@@ -1,6 +1,8 @@
+/* eslint-disable camelcase */
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
+import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
 // @mui
@@ -9,6 +11,7 @@ import {
   Table,
   Stack,
   Paper,
+  Chip,
   Avatar,
   Button,
   Popover,
@@ -35,10 +38,11 @@ import Scrollbar from '../components/scrollbar';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'store_vet', label: 'Store/Vet', alignRight: false },
-  { id: 'distributor', label: 'Distributor', alignRight: false },
-  { id: 'total', label: 'Total', alignRight: false },
-  { id: 'date', label: 'Date', alignRight: false },
+  { id: 'store_vet', label: 'Name', alignRight: false },
+  { id: 'distributor', label: 'Email', alignRight: false },
+  { id: 'total', label: 'Start Date ', alignRight: false },
+  { id: 'date', label: 'End Date', alignRight: false },
+  { id: 'Reason', label: 'Reason', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
   { id: '' },
 ];
@@ -103,8 +107,8 @@ export default function OrdersPage() {
   const handleCloseMenu = () => {
     setOpen(null);
   };
-  const handleViewPopUpClick = () => {
-    navigate(`/orders/${selectedRow.id}`);
+  const handleChangeStatus = () => {
+    console.log('Application state changed');
   };
 
   const handleRequestSort = (event, property) => {
@@ -199,36 +203,36 @@ export default function OrdersPage() {
 
   // ################################################
   const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'Orders'));
+    const querySnapshot = await getDocs(collection(db, 'leaveApplication'));
     const results = [];
 
-    console.log('Orders Snapshot :', querySnapshot);
+    console.log('leaveApplication Snapshot :', querySnapshot);
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
         const id = element.id;
-        if (data.status) {
-          if (data.BuyerRefrence) {
-            const referenceDoc = doc(db, data.BuyerRefrence.path);
+        if (data.creator) {
+          if (data.creator) {
+            const referenceDoc = doc(db, data.creator.path);
             const referenceDocSnap = await getDoc(referenceDoc);
             const referenceData = referenceDocSnap.data();
 
-            data.BuyerRefrence = referenceData;
+            data.creator = referenceData;
           }
-          if (data.DistributorRefrence) {
-            const referenceDoc = doc(db, data.DistributorRefrence.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
+          //   if (data.DistributorRefrence) {
+          //     const referenceDoc = doc(db, data.DistributorRefrence.path);
+          //     const referenceDocSnap = await getDoc(referenceDoc);
+          //     const referenceData = referenceDocSnap.data();
 
-            data.DistributorRefrence = referenceData;
-          }
-          if (data.orderCreator) {
-            const referenceDoc = doc(db, data.orderCreator.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
+          //     data.DistributorRefrence = referenceData;
+          //   }
+          //   if (data.orderCreator) {
+          //     const referenceDoc = doc(db, data.orderCreator.path);
+          //     const referenceDocSnap = await getDoc(referenceDoc);
+          //     const referenceData = referenceDocSnap.data();
 
-            data.orderCreator = referenceData;
-          }
+          //     data.orderCreator = referenceData;
+          //   }
 
           // results.push(data);
           results.push({ id, ...data });
@@ -237,7 +241,7 @@ export default function OrdersPage() {
       })
     );
     setOrders(results);
-    console.log('Orders ', results);
+    console.log('Leave ', results);
   };
 
   const getFormattedDate = (orderDate) => {
@@ -262,7 +266,7 @@ export default function OrdersPage() {
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Orders
+            Leave Applications
           </Typography>
           {/* <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
@@ -288,33 +292,53 @@ export default function OrdersPage() {
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                     const {
-                      OrderId,
-                      BuyerRefrence,
-                      DistributorRefrence,
-                      OrderDate,
-                      orderCreator,
-                      status,
-                      totalAfterDiscount,
-                      totalBeforeDiscount,
+                      uid,
+                      creator,
+                      dateCreated,
+                      endDate,
+                      reaseon,
+                      startDate,
+                      display_name,
+                      email,
+                      isApproved,
+                      city,
                     } = row;
-                    const selectedUser = selected.indexOf(row?.OrderId) !== -1;
+                    const selectedUser = selected.indexOf(row?.dateCreated) !== -1;
 
                     return (
-                      <TableRow hover key={row?.OrderId} tabIndex={-1} role="checkbox" selected={selectedUser}>
+                      <TableRow hover key={row?.dateCreated} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
                           <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, row?.OrderId)} />
                         </TableCell> */}
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {BuyerRefrence?.BuyerName}
+                            {creator?.display_name}
                           </Typography>
                         </TableCell>
-                        <TableCell align="left">{DistributorRefrence?.VendorName}</TableCell>
-                        <TableCell align="left">{totalAfterDiscount}</TableCell>
-                        <TableCell align="left">{getFormattedDate(OrderDate)}</TableCell>
+                        <TableCell align="left">{creator?.email}</TableCell>
+                        <TableCell align="left">{getFormattedDate(startDate)}</TableCell>
+                        <TableCell align="left">{getFormattedDate(endDate)}</TableCell>
+                        <TableCell align="left">{reaseon}</TableCell>
+                        {/* <TableCell align="left">{isApproved}</TableCell> */}
+
                         <TableCell align="left">
+                          {isApproved === 0 && (
+                            <Chip label="Pending" style={{ backgroundColor: 'rgb(255 206 19)', color: 'black' }} />
+                          )}
+                          {isApproved === 1 && (
+                            <Chip label="Approved" style={{ backgroundColor: '#5cb85c', color: 'black' }} />
+                          )}
+                          {isApproved === 2 && (
+                            <Chip label="Rejected" style={{ backgroundColor: '#d9534f', color: 'black' }} />
+                          )}
+                        </TableCell>
+                        <TableCell align="left">
+                          {/* label="Approved"
+                            style={{ backgroundColor: isApproved === 0 ? 'rgb(255, 72, 66)' : '',
+                              color: 'black',
+                            }} */}
                           {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}
-                          {status}
+                          {/* {status} */}
                         </TableCell>
 
                         <TableCell align="right">
@@ -395,9 +419,13 @@ export default function OrdersPage() {
           },
         }}
       >
-        <MenuItem onClick={() => handleViewPopUpClick()}>
-          <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          View
+        <MenuItem onClick={() => handleChangeStatus()}>
+          <Icon icon="material-symbols:order-approve-sharp" style={{ marginRight: '5px' }} />
+          Approve
+        </MenuItem>
+        <MenuItem onClick={() => handleChangeStatus()}>
+          <Icon icon="fluent:text-change-reject-24-filled" style={{ marginRight: '5px' }} />
+          Reject
         </MenuItem>
 
         {/* <MenuItem sx={{ color: 'error.main' }}>
