@@ -4,7 +4,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore';
 // @mui
 import {
   Card,
@@ -26,7 +26,10 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
+import DoneIcon from '@mui/icons-material/Done';
+import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
+import { app } from '../firebase_setup/firebase';
 // components
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
@@ -36,7 +39,7 @@ import Scrollbar from '../components/scrollbar';
 // mock
 
 // ----------------------------------------------------------------------
-
+const firestore = getFirestore(app);
 const TABLE_HEAD = [
   { id: 'store_vet', label: 'Name', alignRight: false },
   { id: 'distributor', label: 'Email', alignRight: false },
@@ -107,8 +110,41 @@ export default function OrdersPage() {
   const handleCloseMenu = () => {
     setOpen(null);
   };
-  const handleChangeStatus = () => {
-    console.log('Application state changed');
+  const handleChangeStatusApprove = (e, selectedRow) => {
+    // console.log('Application state changed Approve Event', e);
+    // console.log('Application state changed Approve ', selectedRow);
+    const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
+
+    const newUser = {
+      isApproved: 1,
+    };
+    updateDoc(docRef, newUser)
+      .then(() => {
+        console.log('Application state changed to Approve', selectedRow);
+        fetchData();
+        handleCloseMenu();
+      })
+      .catch((error) => {
+        console.error('Error updating document:', error);
+      });
+  };
+  const handleChangeStatusReject = (e, selectedRow) => {
+    // console.log('Application state changed Reject Event', e);
+    // console.log('Application state changed Reject ', selectedRow);
+    const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
+
+    const newUser = {
+      isApproved: 2,
+    };
+    updateDoc(docRef, newUser)
+      .then(() => {
+        console.log('Application state changed to Rejected', selectedRow);
+        fetchData();
+        handleCloseMenu();
+      })
+      .catch((error) => {
+        console.error('Error updating document:', error);
+      });
   };
 
   const handleRequestSort = (event, property) => {
@@ -153,6 +189,10 @@ export default function OrdersPage() {
   const handleFilterByName = (event) => {
     setPage(0);
     setFilterName(event.target.value);
+  };
+  const handleOnReload = (event) => {
+    fetchData();
+    console.log('OnReload');
   };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orders.length) : 0;
@@ -210,6 +250,7 @@ export default function OrdersPage() {
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
+        console.log('DATA :', data);
         const id = element.id;
         if (data.creator) {
           if (data.creator) {
@@ -260,7 +301,7 @@ export default function OrdersPage() {
   return (
     <>
       <Helmet>
-        <title> Orders | Admin </title>
+        <title> Leave Applications | Admin </title>
       </Helmet>
 
       <Container>
@@ -274,7 +315,12 @@ export default function OrdersPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleOnReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
@@ -303,12 +349,13 @@ export default function OrdersPage() {
                       isApproved,
                       city,
                     } = row;
+
                     const selectedUser = selected.indexOf(row?.dateCreated) !== -1;
 
                     return (
                       <TableRow hover key={row?.dateCreated} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
-                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, row?.OrderId)} />
+                          <Checkbox checked={selectedUser} onChange={(Reject) => handleClick(event, row?.OrderId)} />
                         </TableCell> */}
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
@@ -323,13 +370,13 @@ export default function OrdersPage() {
 
                         <TableCell align="left">
                           {isApproved === 0 && (
-                            <Chip label="Pending" style={{ backgroundColor: 'rgb(255 206 19)', color: 'black' }} />
+                            <Chip label="Pending" style={{ backgroundColor: 'rgb(255 206 19)', color: 'white' }} />
                           )}
                           {isApproved === 1 && (
-                            <Chip label="Approved" style={{ backgroundColor: '#5cb85c', color: 'black' }} />
+                            <Chip label="Approved" style={{ backgroundColor: '#5cb85c', color: 'white' }} />
                           )}
                           {isApproved === 2 && (
-                            <Chip label="Rejected" style={{ backgroundColor: '#d9534f', color: 'black' }} />
+                            <Chip label="Rejected" style={{ backgroundColor: '#d9534f', color: 'white' }} />
                           )}
                         </TableCell>
                         <TableCell align="left">
@@ -419,12 +466,22 @@ export default function OrdersPage() {
           },
         }}
       >
-        <MenuItem onClick={() => handleChangeStatus()}>
-          <Icon icon="material-symbols:order-approve-sharp" style={{ marginRight: '5px' }} />
+        <MenuItem onClick={(e) => handleChangeStatusApprove(e, selectedRow)}>
+          <DoneIcon sx={{ mr: 2, color: 'success.main' }} />
+          {/* <Icon
+            icon="material-symbols:order-approve-sharp"
+            style={{ marginRight: '5px' }}
+            sx={{ color: 'success.main' }}
+          /> */}
           Approve
         </MenuItem>
-        <MenuItem onClick={() => handleChangeStatus()}>
-          <Icon icon="fluent:text-change-reject-24-filled" style={{ marginRight: '5px' }} />
+        <MenuItem onClick={(e) => handleChangeStatusReject(e, selectedRow)}>
+          <CloseIcon sx={{ mr: 2, color: 'error.main' }} />
+          {/* <Icon
+            icon="fluent:text-change-reject-24-filled"
+            style={{ marginRight: '5px' }}
+            sx={{ color: 'error.main' }}
+          /> */}
           Reject
         </MenuItem>
 
