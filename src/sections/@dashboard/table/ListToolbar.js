@@ -71,9 +71,10 @@ export default function ListToolbar({
   showSearch = true,
   isFilter = false,
   isDateRange = false,
+  selectedDate,
+  setSelectedDate
 }) {
   const [isFilterClicked, setIsFilterClicked] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const handleDateChange = (date) => {
     setSelectedDate(date); // handle the selected date
