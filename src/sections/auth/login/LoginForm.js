@@ -75,7 +75,8 @@ export default function LoginForm() {
           console.error('No such document!');
         }
       } catch (error) {
-        setErrorMessage(error);
+        console.log(error);
+        setErrorMessage('Wrong email id or password');
         handleOpenSnackBar();
       }
     },
