@@ -101,7 +101,7 @@ export default function AccountPopover() {
             {user?.email}
           </Typography>
         </Box>
-
+{/* 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Stack sx={{ p: 1 }}>
@@ -110,7 +110,7 @@ export default function AccountPopover() {
               {option.label}
             </MenuItem>
           ))}
-        </Stack>
+        </Stack> */}
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 

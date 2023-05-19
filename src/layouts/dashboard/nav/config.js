@@ -17,9 +17,25 @@ const navConfig = [
     icon: icon('ic_user'),
   },
   {
+    title: 'buyers',
+    path: '/buyers',
+    icon: icon('ic_buyer'),
+  },
+  {
+    title: 'distributors',
+    path: '/distributors',
+    icon: icon('ic_distributor'),
+  },
+  {
     title: 'Orders',
     path: '/orders',
     icon: icon('ic_orders'),
+  },
+
+  {
+    title: 'Attendance',
+    path: '/attendance',
+    icon: icon('ic_attendance'),
   },
   {
     title: 'Leave Applications',
@@ -27,9 +43,9 @@ const navConfig = [
     icon: icon('ic_leave'),
   },
   {
-    title: 'Attendance',
-    path: '/attendance',
-    icon: icon('ic_attendance'),
+    title: 'Expenses',
+    path: '/userExpenses',
+    icon: icon('ic_expense'),
   },
 ];
 

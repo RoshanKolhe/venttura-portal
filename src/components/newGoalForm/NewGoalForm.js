@@ -75,10 +75,10 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
     const data = await fetchData();
     return data.some((obj) => Object.prototype.hasOwnProperty.call(obj, monthAndYear));
   };
+
   const handleAddNewGoals = async () => {
     console.log(defaultGoals);
     if (userAllGoals.length > 0) {
-      console.log('userAllGoalsstart', userAllGoals);
       const updatedDate = new Date(selectedDate);
       const monthAndYear = `${String(updatedDate.getMonth() + 1).padStart(2, '0')}-${updatedDate.getFullYear()}`;
       const finalGoals = [];
@@ -90,15 +90,10 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
         delete updatedData.actualReference;
         finalGoals.push(updatedData);
       });
-      console.log('finalGoals', finalGoals);
       if (finalGoals && finalGoals.length > 0) {
-        console.log('userAllGoalsend', userAllGoals);
         const userNewGoals = userAllGoals.map((res) => ({ ...res, [monthAndYear]: finalGoals }));
-        console.log('userNewGoals', userNewGoals);
         const inputData = { goals: userNewGoals };
-
         const docRef = doc(db, 'users', params.id);
-        console.log(inputData);
         await updateDoc(docRef, inputData);
       }
       setOpenModal(false);

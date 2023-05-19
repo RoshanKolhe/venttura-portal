@@ -42,11 +42,11 @@ import Scrollbar from '../components/scrollbar';
 const firestore = getFirestore(app);
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', alignRight: false },
-  { id: 'email', label: 'Email', alignRight: false },
-  { id: 'startDate', label: 'Start Date ', alignRight: false },
-  { id: 'endDate', label: 'End Date', alignRight: false },
-  { id: 'reason', label: 'Reason', alignRight: false },
+  { id: 'distributor', label: 'Email', alignRight: false },
+  { id: 'total', label: 'Start Date ', alignRight: false },
+  { id: 'date', label: 'End Date', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
+  { id: 'type', label: 'Type', alignRight: false },
   { id: '' },
 ];
 
@@ -77,12 +77,12 @@ function applySortFilter(array, comparator, query) {
   });
   console.log('query', query);
   if (query) {
-    return filter(array, (_user) => _user?.creator.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user?.salesPerson.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
 
-export default function LeaveApplicationPage() {
+export default function UserExpensePage() {
   const [open, setOpen] = useState(null);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
@@ -112,12 +112,10 @@ export default function LeaveApplicationPage() {
     setOpen(null);
   };
   const handleChangeStatusApprove = (e, selectedRow) => {
-    // console.log('Application state changed Approve Event', e);
-    // console.log('Application state changed Approve ', selectedRow);
-    const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
+    const docRef = doc(firestore, 'expenses', selectedRow.id);
 
     const newUser = {
-      isApproved: 1,
+      status: 'approved',
     };
     updateDoc(docRef, newUser)
       .then(() => {
@@ -132,10 +130,10 @@ export default function LeaveApplicationPage() {
   const handleChangeStatusReject = (e, selectedRow) => {
     // console.log('Application state changed Reject Event', e);
     // console.log('Application state changed Reject ', selectedRow);
-    const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
+    const docRef = doc(firestore, 'expenses', selectedRow.id);
 
     const newUser = {
-      isApproved: 2,
+      status: 'rejected',
     };
     updateDoc(docRef, newUser)
       .then(() => {
@@ -204,24 +202,19 @@ export default function LeaveApplicationPage() {
 
   // ################################################
   const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'leaveApplication'));
+    const querySnapshot = await getDocs(collection(db, 'expenses'));
     const results = [];
-
-    console.log('leaveApplication Snapshot :', querySnapshot);
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
-        console.log('DATA :', data);
         const id = element.id;
-        if (data.creator) {
-          if (data.creator) {
-            const referenceDoc = doc(db, data.creator.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
+        if (data.salesPerson) {
+          const referenceDoc = doc(db, data.salesPerson.path);
+          const referenceDocSnap = await getDoc(referenceDoc);
+          const referenceData = referenceDocSnap.data();
 
-            data.creator = referenceData;
-          }
-
+          data.salesPerson = referenceData;
+          console.log({ id, ...data });
           results.push({ id, ...data });
           // spread operator
         }
@@ -283,18 +276,7 @@ export default function LeaveApplicationPage() {
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const {
-                      uid,
-                      creator,
-                      dateCreated,
-                      endDate,
-                      reaseon,
-                      startDate,
-                      display_name,
-                      email,
-                      isApproved,
-                      city,
-                    } = row;
+                    const { uid, salesPerson, files, endDate, reaseon, startDate, status, type } = row;
 
                     const selectedUser = selected.indexOf(row?.dateCreated) !== -1;
 
@@ -305,34 +287,38 @@ export default function LeaveApplicationPage() {
                         </TableCell> */}
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {creator?.display_name}
+                            {salesPerson?.display_name}
                           </Typography>
                         </TableCell>
-                        <TableCell align="left">{creator?.email}</TableCell>
+                        <TableCell align="left">{salesPerson?.email}</TableCell>
                         <TableCell align="left">{getFormattedDate(startDate)}</TableCell>
                         <TableCell align="left">{getFormattedDate(endDate)}</TableCell>
-                        <TableCell align="left">{reaseon}</TableCell>
                         {/* <TableCell align="left">{isApproved}</TableCell> */}
-
+                        <TableCell align="left">{type}</TableCell>
                         <TableCell align="left">
-                          {isApproved === 0 && (
+                          {status === 'pending' && (
                             <Chip label="Pending" style={{ backgroundColor: 'rgb(255 206 19)', color: 'white' }} />
                           )}
-                          {isApproved === 1 && (
+                          {status === 'approved' && (
                             <Chip label="Approved" style={{ backgroundColor: '#5cb85c', color: 'white' }} />
                           )}
-                          {isApproved === 2 && (
+                          {status === 'rejected' && (
                             <Chip label="Rejected" style={{ backgroundColor: '#d9534f', color: 'white' }} />
                           )}
                         </TableCell>
-                        <TableCell align="left">
-                          {/* label="Approved"
-                            style={{ backgroundColor: isApproved === 0 ? 'rgb(255, 72, 66)' : '',
-                              color: 'black',
-                            }} */}
-                          {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}
-                          {/* {status} */}
-                        </TableCell>
+                        {files.map((element) => {
+                          return (
+                            <TableCell align="left">
+                              <Label
+                                color="secondary"
+                                onClick={() => window.open(element, '_blank')}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                View
+                              </Label>
+                            </TableCell>
+                          );
+                        })}
 
                         <TableCell align="right">
                           <IconButton

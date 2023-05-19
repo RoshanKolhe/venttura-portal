@@ -2,6 +2,9 @@ import { useNavigate, useRoutes } from 'react-router-dom';
 // layouts
 import React, { useContext, useEffect } from 'react';
 // import { getAuth } from 'firebase/auth';
+import DistributorsPage from '../pages/DistributorsPage';
+import BuyersPage from '../pages/BuyersPage';
+import UserExpensePage from '../pages/UserExpensePage';
 import AttendancePage from '../pages/AttendancePage';
 import GolasPage from '../pages/GoalsPage';
 import OrdersPage from '../pages/OrdersPage';
@@ -43,7 +46,10 @@ export default function Router() {
             { path: '/orders/:id', element: <ViewDetails /> },
             { path: '/users/goals/:id', element: <GolasPage /> },
             { path: '/leaveapplications', element: <LeaveApplicationPage /> },
+            { path: '/userExpenses', element: <UserExpensePage /> },
             { path: '/attendance', element: <AttendancePage /> },
+            { path: '/buyers', element: <BuyersPage /> },
+            { path: '/distributors', element: <DistributorsPage /> },
           ],
         },
       ],
