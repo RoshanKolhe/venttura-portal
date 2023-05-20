@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// const baseURL = process.env.REACT_APP_API_ENDPOINT || 'http://localhost:3001/';
-const baseURL = 'http://localhost:3001/';
+const baseURL = process.env.REACT_APP_API_ENDPOINT || 'http://localhost:3001/';
+// const baseURL = 'http://localhost:3001/';
 
 let headers = {};
 

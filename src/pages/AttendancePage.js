@@ -115,7 +115,7 @@ export default function AttendancePage() {
 
   const [filterName, setFilterName] = useState('');
   const currentDate = new Date().toISOString().split('T')[0];
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const handleOpenSnackBar = () => setOpenSnackBar(true);
 

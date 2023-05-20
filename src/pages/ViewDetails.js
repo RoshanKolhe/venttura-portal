@@ -44,7 +44,7 @@ export default function ViewDetails() {
 
   // const [filterName, setFilterName] = useState('');
 
-  // const [rowsPerPage, setRowsPerPage] = useState(5);
+  // const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const db = getFirestore();
   const collectionName = 'Orders';
@@ -58,7 +58,7 @@ export default function ViewDetails() {
       const results = [];
       if (documentSnapshot.data()) {
         const data = documentSnapshot.data();
-        const id = documentSnapshot.id;
+        const {id} = documentSnapshot;
         console.log('documentData ', data);
 
         if (data.status) {

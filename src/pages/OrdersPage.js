@@ -91,7 +91,7 @@ export default function OrdersPage() {
 
   const [filterName, setFilterName] = useState('');
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const db = getFirestore();
 
@@ -206,7 +206,7 @@ export default function OrdersPage() {
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
-        const id = element.id;
+        const {id} = element;
         if (data.status) {
           if (data.BuyerRefrence) {
             const referenceDoc = doc(db, data.BuyerRefrence.path);

@@ -99,7 +99,7 @@ export default function LeaveApplicationPage() {
 
   const [filterName, setFilterName] = useState('');
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const db = getFirestore();
 
@@ -212,7 +212,7 @@ export default function LeaveApplicationPage() {
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
         console.log('DATA :', data);
-        const id = element.id;
+        const {id} = element;
         if (data.creator) {
           if (data.creator) {
             const referenceDoc = doc(db, data.creator.path);

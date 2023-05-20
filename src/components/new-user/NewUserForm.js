@@ -53,13 +53,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const handleCloseSnackBar = () => setOpenSnackBar(false);
 
   const userFormValidationSchema = yup.object({
-    name: yup
-      .string('Enter name')
-      .required('name is required')
-      .test('len', 'Must be less than 20 characters', (val) => {
-        if (val) return val.toString().length < 20;
-        return true;
-      }),
+    name: yup.string('Enter name').required('name is required'),
     email: yup.string().email('Email must be a valid email address').required('email is required'),
     password: yup
       .string()
@@ -109,9 +103,9 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
             created_time: Timestamp.now(),
             currentGoalsMonthAndYear: formattedDate,
           };
-          
+
           await setDoc(docRef, newUser);
-          
+
           const goalsRef = collection(docRef, 'goals');
           const goalsDocRef = doc(goalsRef, currentMonthAndYeaer);
           await setDoc(goalsDocRef, { allGoals });
@@ -129,7 +123,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
           onDataSubmit('User updated successfully');
         }
       } catch (err) {
-        console.log("firebaseEerro",err);
+        console.log('firebaseEerro', err);
         setErrorMessage('Email already exists');
         setSuccessMessage('');
         handleOpenSnackBar();
@@ -193,6 +187,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
               autoComplete="off"
               value={formik.values.email}
               onChange={formik.handleChange}
+              disabled={!!initialValues}
               error={formik.touched.email && Boolean(formik.errors.email)}
               helperText={formik.touched.email && formik.errors.email}
             />

@@ -5,6 +5,7 @@ import { useTheme } from '@mui/material/styles';
 import { Grid, Container, Typography } from '@mui/material';
 // components
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../helpers/axios';
 import Iconify from '../components/iconify';
 // sections
@@ -26,6 +27,7 @@ import AttendancePage from './AttendancePage';
 export default function DashboardAppPage() {
   const theme = useTheme();
   const [totalCount, setTotalCount] = useState();
+  const navigate = useNavigate();
 
   useEffect((res) => {
     axiosInstance.post('/getDashboardCounts').then((res) => {
@@ -46,11 +48,29 @@ export default function DashboardAppPage() {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={3}
+            onClick={() => {
+              navigate('/buyers');
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <AppWidgetSummary title="Buyers" total={totalCount?.buyersCount} icon={'mdi:account-check'} />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={3}
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              navigate('/distributors');
+            }}
+          >
             <AppWidgetSummary
               title="Distributors"
               total={totalCount?.distributorCount}
@@ -59,7 +79,16 @@ export default function DashboardAppPage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={3}
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              navigate('/orders');
+            }}
+          >
             <AppWidgetSummary
               title="Orders"
               total={totalCount?.totalOrdersPlaced}

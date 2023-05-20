@@ -96,7 +96,7 @@ export default function UserPage() {
 
   const [filterName, setFilterName] = useState('');
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openSnackBar, setOpenSnackBar] = useState(false);
 
   const handleOpenSnackBar = () => setOpenSnackBar(true);
