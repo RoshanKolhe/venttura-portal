@@ -194,11 +194,11 @@ export default function AttendancePage() {
           attendanceData.push(attendance);
         }
         const mergedUser = { ...user, attendance: attendanceData };
-
+        
         mergedData.push(mergedUser);
       }
-
-      setUsersWithAttendance(mergedData);
+      const filteredData = mergedData.filter(obj => !obj.permissions || !obj.permissions.includes("admin"));
+      setUsersWithAttendance(filteredData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -339,8 +339,8 @@ export default function AttendancePage() {
   // }, [usersWithAttendance]);
   useEffect(() => {
     const defaultDates = getCurrentMonthRange();
-    setStartDate(defaultDates.startDate);
-    setEndDate(defaultDates.endDate);
+    setStartDate(new Date());
+    setEndDate(new Date());
     fetchData();
   }, []);
 

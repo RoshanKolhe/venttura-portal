@@ -170,7 +170,9 @@ export default function UserPage() {
       const data = element.data();
       results.push({ id: element.id, ...data });
     });
-    setUsers(results);
+    const filteredData = results.filter(obj => !obj.permissions || !obj.permissions.includes("admin"));
+
+    setUsers(filteredData);
   };
 
   const handleEditClick = () => {
