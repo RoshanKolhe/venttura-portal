@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable object-shorthand */
@@ -32,7 +31,6 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 // components
-import axiosInstance from '../helpers/axios';
 import CustomBox from '../common/CustomBox';
 import NewGoalForm from '../components/newGoalForm/NewGoalForm';
 import { getCurrentMonthAndYear } from '../utils/constants';
@@ -41,7 +39,6 @@ import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
-import CommonSnackBar from '../common/CommonSnackBar';
 // sections
 // mock
 
@@ -107,7 +104,10 @@ export default function GolasPage() {
   const [openModal, setOpenMdal] = useState(false);
   const params = useParams();
   const [selectedRow, setSelectedRow] = useState();
+  const [goalQuantity, setGoalQuantity] = useState(0);
   const [usersGoalsData, setUserGoalsData] = useState([]);
+  const [userAllGoals, setUserAllGoals] = useState([]);
+  const [updateStateData, setUpdateStateData] = useState([]);
   const [order, setOrder] = useState('asc');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -127,7 +127,12 @@ export default function GolasPage() {
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
   const [currentMonthAndYear, setCurrentMonthAndYear] = useState(getCurrentMonthAndYear());
+  const db = getFirestore(app);
   const classes = useStyles();
+  const handleOpenMenu = (event, row) => {
+    setOpen(event.currentTarget);
+    setSelectedRow(row);
+  };
 
   const handleCloseMenu = () => {
     setOpen(null);
@@ -171,67 +176,137 @@ export default function GolasPage() {
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
+  const customConverter = { 
+    fromFirestore: async function (snapshot, options) {
+      const data = snapshot.data(options);
+      if (data.goals && data.goals.length > 0) {
+        const filteredData = [];
+        let i = 0;
+        console.log(data.goals);
+        const currentMonthGoals = data.goals.find((obj) =>
+          Object.prototype.hasOwnProperty.call(obj, currentMonthAndYear)
+        )[currentMonthAndYear];
+        currentMonthGoals.forEach((res) => {
+          filteredData.push({
+            ...res,
+            id: i,
+          });
+          i++;
+        });
+        setUpdateStateData(filteredData);
+        const promises = currentMonthGoals.map(async (reference) => {
+          const referenceDocRef = doc(db, 'Variation', reference.productrefrence.id);
+          const referenceDocSnap = await getDoc(referenceDocRef);
+          if (referenceDocSnap.exists()) {
+            reference.productrefrence = referenceDocSnap.data();
+
+            if (reference.productrefrence.productRefrence) {
+              const referenceChildDocRef = doc(db, 'Products', reference.productrefrence.productRefrence.id);
+
+              const referenceDocChildSnap = await getDoc(referenceChildDocRef);
+              if (referenceDocChildSnap.exists()) {
+                reference.productrefrence.productRefrence = referenceDocChildSnap.data();
+              } else {
+                console.log('Child document does not exist!');
+              }
+            }
+          } else {
+            console.log('Referenced document does not exist!');
+          }
+        });
+        await Promise.all(promises);
+      }
+      return data;
+    },
+    toFirestore: function (data, options) {
+      return data;
+    },
+  };
+
+  const fetchData = async () => {
+    try {
+      const docRef = doc(db, 'users', params.id).withConverter(customConverter);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        data.then((res) => {
+          if (res.goals && res.goals.length > 0) {
+            setUserAllGoals(res.goals);
+            console.log(currentMonthAndYear);
+            const currentMonthGoals = res.goals.find((obj) =>
+              Object.prototype.hasOwnProperty.call(obj, currentMonthAndYear)
+            )[currentMonthAndYear];
+            const filteredData = [];
+            let i = 0;
+            currentMonthGoals.forEach((res) => {
+              filteredData.push({
+                ...res,
+                id: i,
+              });
+              i++;
+            });
+            setUserGoalsData(filteredData);
+          }
+        });
+        return;
+      }
+      setUserGoalsData([]);
+      console.error('No such document!');
+    } catch (error) {
+      setUserGoalsData([]);
+      console.error('Error getting document: ', error);
+    }
+  };
+
   const handleGoalUpdate = async (e, row) => {
-    const updatedData = usersGoalsData.map(({ id, ...rest }) => rest);
-    const payloadData = {
-      userId: params.id,
-      userGoals: updatedData,
-      currentMonthAndYear: currentMonthAndYear,
-    };
-    axiosInstance
-      .post('/addUpdateNewUserGoals', payloadData)
-      .then((res) => {})
-      .catch((err) => {});
+    console.log(userAllGoals);
+    const userAllGoalsData = userAllGoals;
+    const docRef = doc(db, 'users', params?.id);
+    const updatedData = updateStateData.map(({ id, ...rest }) => rest);
+    console.log(updatedData);
+    const userNewGoals = userAllGoals.map((res) => ({ ...res, [currentMonthAndYear]: updatedData }));
+    const inputData = { goals: userNewGoals };
+    console.log(inputData);
+    await updateDoc(docRef, inputData);
   };
 
   const handleItemChanged = (e, row, targetField) => {
     const foundIndex = usersGoalsData.findIndex((x) => x.id === row.id);
+    console.log(foundIndex);
     const rowData = usersGoalsData[foundIndex];
-
-    const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value || 0) };
+    const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value) };
     const updatedFilteredGoals = usersGoalsData.map((item, index) => {
       if (index === foundIndex) return { ...updatedData };
       return { ...item };
     });
+    const rowStateData = updateStateData[foundIndex];
+    const updatedrowStateData = { ...rowStateData, [targetField]: parseFloat(e.target.value) };
+    const updatedStateGoals = updateStateData.map((item, index) => {
+      if (index === foundIndex) return { ...updatedrowStateData };
+      return { ...item };
+    });
+    console.log('updatedStateGoals', updatedStateGoals);
+    console.log('updatedFilteredGoals', updatedFilteredGoals);
+
+    setUpdateStateData(updatedStateGoals);
     setUserGoalsData(updatedFilteredGoals);
   };
 
-  const fetchData = () => {
-    setUserGoalsData([]);
-    const inputData = {
-      userId: params.id,
-      monthAndYear: currentMonthAndYear,
-    };
-    axiosInstance
-      .post('/getUserGoals', inputData)
-      .then((res) => {
-        if (res.data.status) {
-          const filteredData = [];
-          let i = 0;
-          res.data.monthGoals.forEach((res) => {
-            filteredData.push({
-              ...res,
-              id: i,
-            });
-            i++;
-          });
-          setUserGoalsData(filteredData);
-        }
-      })
-      .catch((err) => {
-        setUserGoalsData([]);
-      });
+  const getFormattedDate = (orderDate) => {
+    if (orderDate) {
+      const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
+      const formattedDate = date.toLocaleString(); // change the format to your preferred date format
+      return formattedDate;
+    }
+    return '';
   };
 
   useEffect(() => {
     const date = new Date(selectedDate);
     console.log(date);
     setCurrentMonthAndYear(`${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`);
-  }, [selectedDate]);
-
-  useEffect(() => {
     fetchData();
-  }, [currentMonthAndYear]);
+  }, [selectedDate, currentMonthAndYear]);
 
   useEffect(() => {
     fetchData();
@@ -283,7 +358,7 @@ export default function GolasPage() {
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { goalQuantity, productName, variationName, quantity, OrderDate, totalAmount } = row;
+                    const { goalQuantity, productrefrence, quantity, OrderDate, totalAmount } = row;
                     const selectedUser = selected.indexOf(row?.id) !== -1;
 
                     return (
@@ -294,11 +369,11 @@ export default function GolasPage() {
 
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {productName}
+                            {productrefrence?.productRefrence?.ProductName}
                           </Typography>
                         </TableCell>
 
-                        <TableCell align="left">{variationName}</TableCell>
+                        <TableCell align="left">{productrefrence?.variationName}</TableCell>
 
                         <TableCell align="left">
                           <TextField
@@ -383,12 +458,6 @@ export default function GolasPage() {
             />
           </CustomBox>
         </Modal>
-        <CommonSnackBar
-          openSnackBar={openSnackBar}
-          handleCloseSnackBar={handleCloseSnackBar}
-          msg={msg}
-          severity="success"
-        />
       </Container>
 
       <Popover

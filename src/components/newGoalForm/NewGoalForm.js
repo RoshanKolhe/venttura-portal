@@ -1,7 +1,7 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable object-shorthand */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Field, useFormik } from 'formik';
 import * as yup from 'yup';
 import 'react-phone-input-2/lib/material.css';
@@ -35,6 +35,7 @@ import closefill from '@iconify/icons-eva/close-fill';
 import { Timestamp, collection, doc, getDoc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 import { LoadingButton } from '@mui/lab';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import axiosInstance from '../../helpers/axios';
 import { WarningPopup } from '../../common/WarningPopup';
 import { variationJson } from '../../utils/constants';
 import LoadingScreen from '../../common/LoadingScreen';
@@ -48,9 +49,8 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   const currentDate = new Date();
   const [selectedDate, setSelectedDate] = useState(null);
   // const [userAllGoals, setUserAllGoals] = useState([]);
-  let userAllGoals = [];
   const [openModal, setOpenModal] = useState(false);
-
+  const dateTimePickerRef = useRef(null);
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const [defaultGoals, setDefaultGoals] = useState([]);
   const [goalsWithProductData, setGoalsWithProductData] = useState([]);
@@ -70,36 +70,53 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   });
 
   const checkDateGoalsExists = async (date) => {
-    const updatedDate = new Date(date);
-    const monthAndYear = `${String(updatedDate.getMonth() + 1).padStart(2, '0')}-${updatedDate.getFullYear()}`;
-    const data = await fetchData();
-    return data.some((obj) => Object.prototype.hasOwnProperty.call(obj, monthAndYear));
+    try {
+      const updatedDate = new Date(date);
+      const monthAndYear = `${String(updatedDate.getMonth() + 1).padStart(2, '0')}-${updatedDate.getFullYear()}`;
+      const inputData = {
+        userId: params.id,
+        monthAndYear: monthAndYear,
+      };
+
+      const response = await axiosInstance.post('/checkIfGoalsExists', inputData);
+      const { data } = response;
+      return data.status;
+    } catch (error) {
+      console.error(error);
+      // Handle error case
+    }
+    return false;
   };
 
   const handleAddNewGoals = async () => {
-    console.log(defaultGoals);
-    if (userAllGoals.length > 0) {
+    if (selectedDate) {
+      formik.setFieldError('monthAndYear', '');
       const updatedDate = new Date(selectedDate);
       const monthAndYear = `${String(updatedDate.getMonth() + 1).padStart(2, '0')}-${updatedDate.getFullYear()}`;
-      const finalGoals = [];
-      defaultGoals.forEach((item) => {
-        const updatedData = {
-          ...item,
-          productrefrence: item.actualReference,
+
+      const finalGoals = defaultGoals.map((item) => ({
+        ...item,
+        productrefrence: item.actualReference,
+        actualReference: undefined,
+      }));
+      let message = '';
+      if (finalGoals.length > 0) {
+        const inputData = {
+          userId: params.id,
+          userGoals: finalGoals,
+          currentMonthAndYear: monthAndYear,
         };
-        delete updatedData.actualReference;
-        finalGoals.push(updatedData);
-      });
-      if (finalGoals && finalGoals.length > 0) {
-        const userNewGoals = userAllGoals.map((res) => ({ ...res, [monthAndYear]: finalGoals }));
-        const inputData = { goals: userNewGoals };
-        const docRef = doc(db, 'users', params.id);
-        await updateDoc(docRef, inputData);
+
+        const response = await axiosInstance.post('/addUpdateNewUserGoals', inputData);
+        if (response.data) {
+          message = response.data.message;
+        }
       }
       setOpenModal(false);
-      onDataSubmit();
+      onDataSubmit(message);
     } else {
-      console.log('none');
+      formik.setErrors({ monthAndYear: 'Month and year is required' });
+      handleFocusDateTimePicker();
     }
   };
 
@@ -127,7 +144,11 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
     setSelectedDate(date);
     formik.setFieldValue('monthAndYear', date);
   };
-
+  const handleFocusDateTimePicker = () => {
+    if (dateTimePickerRef.current) {
+      dateTimePickerRef.current.focus();
+    }
+  };
   const handleItemChanged = (e, row, targetField) => {
     const foundIndex = defaultGoals.findIndex((x) => x.id === row.id);
     const rowData = defaultGoals[foundIndex];
@@ -148,32 +169,13 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   };
 
   const handleOkClick = async () => {
-    await fetchData();
     handleAddNewGoals();
   };
+
   const handleCancelClick = () => {
     setOpenModal(false);
   };
 
-  const fetchData = async () => {
-    try {
-      const docRef = doc(db, 'users', params.id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        console.log('user', data);
-        if (data?.goals && data?.goals.length > 0) {
-          userAllGoals = data?.goals;
-          return data?.goals;
-        }
-      }
-      console.error('No such document!');
-    } catch (error) {
-      console.error('Error getting document: ', error);
-    }
-
-    return [];
-  };
   useEffect(() => {
     const fetchDataVariation = async () => {
       try {
@@ -247,8 +249,16 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
                 label="Month and Year"
                 value={selectedDate}
                 onChange={handleDateChange}
-                renderInput={(params) => <TextField {...params} style={{ width: '100%' }} />}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    style={{ width: '100%' }}
+                    error={Boolean(formik?.errors?.monthAndYear)}
+                    inputRef={dateTimePickerRef}
+                  />
+                )}
               />
+              <FormHelperText error>{formik?.errors?.monthAndYear}</FormHelperText>
             </Grid>
           </LocalizationProvider>
           <Grid item xs={12}>

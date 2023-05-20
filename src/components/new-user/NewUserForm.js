@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Field, useFormik } from 'formik';
+import eyeFill from '@iconify/icons-eva/eye-fill';
+import eyeOffFill from '@iconify/icons-eva/eye-off-fill';
 import * as yup from 'yup';
 import 'react-phone-input-2/lib/material.css';
 import SaveIcon from '@mui/icons-material/Save';
@@ -14,6 +16,7 @@ import {
   InputLabel,
   Tooltip,
   IconButton,
+  InputAdornment,
 } from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
@@ -38,6 +41,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const year = currentDate.getFullYear();
   const auth = getAuth();
+  const [showPassword, setShowPassword] = useState(false);
   const formattedDate = `${month}-${year}`;
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const firestore = getFirestore(app);
@@ -57,6 +61,23 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
         return true;
       }),
     email: yup.string().email('Email must be a valid email address').required('email is required'),
+    password: yup
+      .string()
+      .min(8, 'Password is too short - should be 8 chars minimum.')
+      .matches(
+        // eslint-disable-next-line no-useless-escape
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
+        'Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character'
+      )
+      .test('', (value, context) => {
+        // Check if the condition is true
+        if (!initialValues) {
+          // Apply the required validation
+          return yup.string().required('Password is required').isValidSync(value);
+        }
+        // Skip the required validation
+        return true;
+      }),
     city: yup.string('Select city').required('city is required'),
   });
 
@@ -70,39 +91,57 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
     enableReinitialize: true,
     validationSchema: userFormValidationSchema,
     onSubmit: async (values) => {
-      setLoading(true);
-      if (!initialValues) {
-        const userCredential = await createUserWithEmailAndPassword(auth, values.email, 'Wolfizer@2023');
-        const usersRef = collection(firestore, 'users');
-        const docRef = doc(usersRef, userCredential.user.uid);
-        const allGoals = await variationJson();
-        const currentMonthAndYeaer = getCurrentMonthAndYear();
-        const newUser = {
-          display_name: values.name,
-          email: values.email,
-          city: values.city,
-          uid: userCredential.user.uid,
-          revenuegenerated: 0.0,
-          unitsSold: 0,
-          created_time: Timestamp.now(),
-          goals: [{ [currentMonthAndYeaer]: allGoals }],
-          currentGoalsMonthAndYear: formattedDate,
-        };
-        await setDoc(docRef, newUser);
-        setLoading(false);
-      } else {
-        const docRef = doc(firestore, 'users', initialValues?.id);
-        const newUser = {
-          display_name: values.name,
-          email: values.email,
-          city: values.city,
-        };
-        await updateDoc(docRef, newUser);
+      try {
+        setLoading(true);
+        if (!initialValues) {
+          const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+          const usersRef = collection(firestore, 'users');
+          const docRef = doc(usersRef, userCredential.user.uid);
+          const allGoals = await variationJson();
+          const currentMonthAndYeaer = getCurrentMonthAndYear();
+          const newUser = {
+            display_name: values.name,
+            email: values.email,
+            city: values.city,
+            uid: userCredential.user.uid,
+            revenuegenerated: 0.0,
+            unitsSold: 0,
+            created_time: Timestamp.now(),
+            currentGoalsMonthAndYear: formattedDate,
+          };
+          
+          await setDoc(docRef, newUser);
+          
+          const goalsRef = collection(docRef, 'goals');
+          const goalsDocRef = doc(goalsRef, currentMonthAndYeaer);
+          await setDoc(goalsDocRef, { allGoals });
+          setLoading(false);
+          onDataSubmit('User created successfully');
+        } else {
+          const docRef = doc(firestore, 'users', initialValues?.id);
+          const newUser = {
+            display_name: values.name,
+            email: values.email,
+            city: values.city,
+          };
+          await updateDoc(docRef, newUser);
+          setLoading(false);
+          onDataSubmit('User updated successfully');
+        }
+      } catch (err) {
+        console.log("firebaseEerro",err);
+        setErrorMessage('Email already exists');
+        setSuccessMessage('');
+        handleOpenSnackBar();
         setLoading(false);
       }
-      onDataSubmit(initialValues ? 'User updated successfully' : 'User created successfully');
     },
   });
+  const { errors, touched, isSubmitting, handleSubmit, getFieldProps } = formik;
+
+  const handleShowPassword = () => {
+    setShowPassword((show) => !show);
+  };
 
   const handleChange = (event) => {
     formik.setFieldValue('city', event.target.value);
@@ -151,12 +190,40 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
               name="email"
               label="Email"
               type="text"
+              autoComplete="off"
               value={formik.values.email}
               onChange={formik.handleChange}
               error={formik.touched.email && Boolean(formik.errors.email)}
               helperText={formik.touched.email && formik.errors.email}
             />
           </Grid>
+          {!initialValues ? (
+            <Grid item xs={12} lg={12} margin={2}>
+              <TextField
+                fullWidth
+                autoComplete="current-password"
+                type={showPassword ? 'text' : 'password'}
+                label="Password"
+                {...getFieldProps('password')}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={handleShowPassword} edge="end">
+                        <Icon icon={showPassword ? eyeFill : eyeOffFill} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  disableUnderline: true,
+                }}
+                error={Boolean(touched.password && errors.password)}
+                helperText={touched.password && errors.password}
+                inputProps={{
+                  'data-testid': 'password-input',
+                }}
+              />
+            </Grid>
+          ) : null}
+
           <Grid item xs={12} lg={12} margin={2}>
             <FormControl fullWidth error={formik?.touched?.city && formik?.errors?.city}>
               <InputLabel id="type-label">City</InputLabel>

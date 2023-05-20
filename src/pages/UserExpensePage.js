@@ -240,13 +240,13 @@ export default function UserExpensePage() {
   return (
     <>
       <Helmet>
-        <title> Leave Applications | Admin </title>
+        <title> Expenses | Admin </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Leave Applications
+            Expenses
           </Typography>
           {/* <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
