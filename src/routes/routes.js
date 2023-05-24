@@ -2,6 +2,8 @@ import { useNavigate, useRoutes } from 'react-router-dom';
 // layouts
 import React, { useContext, useEffect } from 'react';
 // import { getAuth } from 'firebase/auth';
+import DocumentsPage from '../pages/DocumentsPage';
+import CategoriesPage from '../pages/CategoriesPage';
 import DistributorsPage from '../pages/DistributorsPage';
 import BuyersPage from '../pages/BuyersPage';
 import UserExpensePage from '../pages/UserExpensePage';
@@ -42,6 +44,8 @@ export default function Router() {
           children: [
             { path: '/dashboard', element: <DashboardAppPage /> },
             { path: '/users', element: <UserPage /> },
+            { path: '/categories', element: <CategoriesPage /> },
+            { path: '/documents', element: <DocumentsPage /> },
             { path: '/orders', element: <OrdersPage /> },
             { path: '/orders/:id', element: <ViewDetails /> },
             { path: '/users/goals/:id', element: <GolasPage /> },

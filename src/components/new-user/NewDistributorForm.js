@@ -143,7 +143,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
               fullWidth
               id="VendorName"
               name="VendorName"
-              label="Vendor Name"
+              label="Distributor Name"
               type="text"
               value={formik.values.VendorName}
               onChange={formik.handleChange}

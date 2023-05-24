@@ -31,6 +31,7 @@ import {
 } from '@mui/material';
 // components
 import { collection, doc, getDoc, getDocs, getFirestore, updateDoc } from 'firebase/firestore';
+import NewCategoryForm from '../components/category/NewCategoryForm';
 import NewDistributorForm from '../components/new-user/NewDistributorForm';
 import NewBuyerForm from '../components/new-user/NewBuyerForm';
 import CommonSnackBar from '../common/CommonSnackBar';
@@ -41,21 +42,12 @@ import Scrollbar from '../components/scrollbar';
 // sections
 import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 // mock
-import users from '../_mock/user';
+import categories from '../_mock/user';
 import CustomBox from '../common/CustomBox';
 
 // ----------------------------------------------------------------------
 
-const TABLE_HEAD = [
-  { id: 'name', label: 'Distributor Name', alignRight: false },
-  { id: 'address', label: 'Address', alignRight: false },
-  { id: 'contact', label: 'Contact', alignRight: false },
-  { id: 'contactPerson', label: 'Contact Person', alignRight: false },
-  { id: 'gstin', label: 'GSTIN', alignRight: false },
-  { id: 'location', label: 'Location', alignRight: false },
-
-  { id: '' },
-];
+const TABLE_HEAD = [{ id: 'name', label: 'Category Name', alignRight: false }, { id: '' }];
 
 // --------------------------------------------------------------------
 
@@ -83,19 +75,19 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user.VendorName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user.categoryName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
 
-export default function DistributorsPage() {
+export default function CategoriesPage() {
   const [open, setOpen] = useState(null);
   const [msg, setMsg] = useState('');
   const [openModal, setOpenMdal] = useState(false);
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
   const [order, setOrder] = useState('asc');
-  const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selected, setSelected] = useState([]);
   const [selectedRow, setSelectedRow] = useState();
   const [orderBy, setOrderBy] = useState('name');
@@ -116,39 +108,7 @@ export default function DistributorsPage() {
   const handleCloseMenu = () => {
     setOpen(null);
   };
-  const handleChangeStatusApprove = (e, selectedRow) => {
-    const docRef = doc(db, 'Buyers', selectedRow.id);
 
-    const newUser = {
-      Status: 'verified',
-    };
-    updateDoc(docRef, newUser)
-      .then(() => {
-        fetchData();
-        handleCloseMenu();
-      })
-      .catch((error) => {
-        console.error('Error updating document:', error);
-      });
-  };
-  const handleChangeStatusReject = (e, selectedRow) => {
-    // console.log('Application state changed Reject Event', e);
-    // console.log('Application state changed Reject ', selectedRow);
-    const docRef = doc(db, 'Buyers', selectedRow.id);
-
-    const newUser = {
-      Status: 'rejected',
-    };
-    updateDoc(docRef, newUser)
-      .then(() => {
-        console.log('Application state changed to Rejected', selectedRow);
-        fetchData();
-        handleCloseMenu();
-      })
-      .catch((error) => {
-        console.error('Error updating document:', error);
-      });
-  };
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -157,7 +117,7 @@ export default function DistributorsPage() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = users.map((n) => n.name);
+      const newSelecteds = categories.map((n) => n.name);
       setSelected(newSelecteds);
       return;
     }
@@ -194,14 +154,14 @@ export default function DistributorsPage() {
   };
   const handleOpen = () => setOpenMdal(true);
   const handleClose = () => setOpenMdal(false);
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - categories.length) : 0;
 
-  const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
+  const filteredUsers = applySortFilter(categories, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
   const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'Distributor'));
+    const querySnapshot = await getDocs(collection(db, 'Categories'));
     const results = [];
     // eslint-disable-next-line no-restricted-syntax
     querySnapshot.docs.map(async (element) => {
@@ -209,7 +169,7 @@ export default function DistributorsPage() {
       results.push({ id: element.id, ...data });
     });
     console.log(results);
-    setUsers(results);
+    setCategories(results);
   };
 
   const handleEditClick = () => {
@@ -224,13 +184,13 @@ export default function DistributorsPage() {
   return (
     <>
       <Helmet>
-        <title> Distributors | Admin </title>
+        <title> Category | Admin </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Distributors
+            Category
           </Typography>
           <Button
             variant="contained"
@@ -242,7 +202,7 @@ export default function DistributorsPage() {
               handleOpen();
             }}
           >
-            New Distributor
+            New Category
           </Button>
         </Stack>
 
@@ -257,23 +217,14 @@ export default function DistributorsPage() {
                   order={order}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
-                  rowCount={users.length}
+                  rowCount={categories.length}
                   numSelected={selected.length}
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const {
-                      id,
-                      Address,
-                      VendorName: name,
-                      DistrbutorContactNumber,
-                      ContactPerson,
-                      GSTIN,
-                      Location,
-                      Status,
-                    } = row;
+                    const { id, categoryName: name } = row;
                     const selectedUser = selected.indexOf(name) !== -1;
 
                     return (
@@ -288,14 +239,6 @@ export default function DistributorsPage() {
                           </Typography>
                         </TableCell>
 
-                        <TableCell align="left">{Address}</TableCell>
-
-                        <TableCell align="left">{DistrbutorContactNumber}</TableCell>
-
-                        <TableCell align="left">{ContactPerson}</TableCell>
-
-                        <TableCell align="left">{GSTIN}</TableCell>
-                        <TableCell align="left">{Location}</TableCell>
                         <TableCell align="right">
                           <IconButton
                             size="large"
@@ -347,7 +290,7 @@ export default function DistributorsPage() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={users.length}
+            count={categories.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -362,7 +305,7 @@ export default function DistributorsPage() {
           aria-describedby="modal-modal-description"
         >
           <CustomBox>
-            <NewDistributorForm
+            <NewCategoryForm
               handleClose={handleClose}
               onDataSubmit={(msg) => {
                 handleClose();
