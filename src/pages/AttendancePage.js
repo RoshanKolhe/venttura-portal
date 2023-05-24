@@ -92,7 +92,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function AttendancePage() {
+export default function AttendancePage({ styles }) {
   const [open, setOpen] = useState(null);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
@@ -194,10 +194,10 @@ export default function AttendancePage() {
           attendanceData.push(attendance);
         }
         const mergedUser = { ...user, attendance: attendanceData };
-        
+
         mergedData.push(mergedUser);
       }
-      const filteredData = mergedData.filter(obj => !obj.permissions || !obj.permissions.includes("admin"));
+      const filteredData = mergedData.filter((obj) => !obj.permissions || !obj.permissions.includes('admin'));
       setUsersWithAttendance(filteredData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -325,7 +325,6 @@ export default function AttendancePage() {
           id: res,
           label: res,
           alignRight: false,
-          cellStyles: { backgroundColor: 'rgba(145, 158, 171, 0.08)' },
         });
       } else {
         tableHeadAray.push({ id: res, label: res, alignRight: false });
@@ -350,7 +349,7 @@ export default function AttendancePage() {
         <title> Attendance | Admin </title>
       </Helmet>
 
-      <Container>
+      <Container style={styles}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
             Attendance

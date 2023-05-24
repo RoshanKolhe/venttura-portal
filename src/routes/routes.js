@@ -22,6 +22,7 @@ import DashboardAppPage from '../pages/DashboardAppPage';
 import PrivateRoutes from './PrivateRoute';
 import { FirebaseContext } from '../firebase_setup/firebase';
 import UserPage from '../pages/UserPage';
+import InventoryPage from '../pages/InventoryPage';
 // ----------------------------------------------------------------------
 
 export default function Router() {
@@ -54,6 +55,7 @@ export default function Router() {
             { path: '/attendance', element: <AttendancePage /> },
             { path: '/buyers', element: <BuyersPage /> },
             { path: '/distributors', element: <DistributorsPage /> },
+            { path: '/distributors/inventory/:id', element: <InventoryPage /> },
           ],
         },
       ],
