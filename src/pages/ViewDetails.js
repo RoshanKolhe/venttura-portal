@@ -270,7 +270,7 @@ export default function ViewDetails() {
                 <Typography>Order Date : {getFormattedDate(OrderDate)}</Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography>Sales Person : {orderCreator.display_name}</Typography>
+                <Typography>Sales Person : {orderCreator?.display_name}</Typography>
               </Grid>
               <Grid
                 item
