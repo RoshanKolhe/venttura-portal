@@ -59,7 +59,6 @@ export default function ViewDetails() {
       if (documentSnapshot.data()) {
         const data = documentSnapshot.data();
         const {id} = documentSnapshot;
-        console.log('documentData ', data);
 
         if (data.status) {
           if (data.BuyerRefrence) {
@@ -134,14 +133,12 @@ export default function ViewDetails() {
   };
 
   useEffect(() => {
-    console.log('useeffect q1');
     // fetchData();
     getDataFromFirebase(collectionName, documentId);
   }, []);
 
   return (
     <>
-      {console.log('Data gathered', data)}
       {data.map((row) => {
         const {
           OrderId,
@@ -154,9 +151,6 @@ export default function ViewDetails() {
           totalBeforeDiscount,
         } = row;
         // eslint-disable-next-line no-lone-blocks
-        {
-          console.log('Data products', products);
-        }
 
         return (
           <>
@@ -168,7 +162,6 @@ export default function ViewDetails() {
               </Grid>
               <Grid item xs={12}>
                 <Typography>Buyers Name : {BuyerRefrence?.BuyerName}</Typography>
-                {console.log('Buyers Details : ', data)}
               </Grid>
               <Grid item xs={12}>
                 <Typography>Buyers Contact : {BuyerRefrence?.ContactNumber}</Typography>
@@ -207,8 +200,6 @@ export default function ViewDetails() {
                   variationRefrence,
                 } = product;
 
-                console.log('index', index);
-                console.log('line', productRefrence.ProductName);
                 return (
                   <div
                     key={index}

@@ -124,17 +124,7 @@ export default function AttendancePage({ styles }) {
 
   const db = getFirestore(app);
   const classes = useStyles();
-  const handleOpenMenu = (event, row) => {
-    setOpen(event.currentTarget);
-    setSelectedRow(row);
-  };
-
-  const handleCloseMenu = () => {
-    setOpen(null);
-  };
-  const handleViewPopUpClick = () => {
-    navigate(`/orders/${selectedRow.id}`);
-  };
+  
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -333,7 +323,7 @@ export default function AttendancePage({ styles }) {
         tableHeadAray.push({ id: res, label: res, alignRight: false });
       }
     });
-    setTableHead([{ id: 'users', label: 'Users', alignRight: false }, ...tableHeadAray]);
+    setTableHead([{ id: 'display_name', label: 'Users', alignRight: false }, ...tableHeadAray]);
   }, [startDate, endDate]);
 
   // useEffect(() => {
@@ -391,9 +381,8 @@ export default function AttendancePage({ styles }) {
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { productrefrence, quantity, OrderDate, totalAmount } = row;
+                    const { productrefrence, display_name: name, quantity, OrderDate, totalAmount } = row;
                     const selectedUser = selected.indexOf(row?.id) !== -1;
-                    console.log(row);
                     return (
                       <TableRow hover key={row?.id} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
@@ -402,7 +391,7 @@ export default function AttendancePage({ styles }) {
 
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {row?.display_name}
+                            {name}
                           </Typography>
                         </TableCell>
 

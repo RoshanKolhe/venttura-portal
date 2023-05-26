@@ -47,7 +47,7 @@ import CustomBox from '../common/CustomBox';
 
 // ----------------------------------------------------------------------
 
-const TABLE_HEAD = [{ id: 'name', label: 'Category Name', alignRight: false }, { id: '' }];
+const TABLE_HEAD = [{ id: 'categoryName', label: 'Category Name', alignRight: false }, { id: '' }];
 
 // --------------------------------------------------------------------
 
@@ -168,7 +168,6 @@ export default function CategoriesPage() {
       const data = element.data();
       results.push({ id: element.id, ...data });
     });
-    console.log(results);
     setCategories(results);
   };
 

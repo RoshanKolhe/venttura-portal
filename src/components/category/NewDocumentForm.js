@@ -38,7 +38,6 @@ import CommonSnackBar from '../../common/CommonSnackBar';
 import { app } from '../../firebase_setup/firebase';
 
 const NewDocumentForm = ({ initialValues, handleClose, onDataSubmit }) => {
-  console.log(initialValues);
   const location = useLocation();
   const navigate = useNavigate();
   const currentDate = new Date();
@@ -100,7 +99,6 @@ const NewDocumentForm = ({ initialValues, handleClose, onDataSubmit }) => {
 
   const handleUpload = async () => {
     if (file) {
-      console.log(file);
       try {
         // Create a storage reference with a unique filename
         const storageRef = ref(storage, `/files/${file.name}`)

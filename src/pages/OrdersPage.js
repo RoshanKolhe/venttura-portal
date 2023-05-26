@@ -35,7 +35,7 @@ import Scrollbar from '../components/scrollbar';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'store_vet', label: 'Store/Vet', alignRight: false },
+  { id: 'BuyerRefrence.BuyerName', label: 'Store/Vet', alignRight: false },
   { id: 'distributor', label: 'Distributor', alignRight: false },
   { id: 'total', label: 'Total', alignRight: false },
   { id: 'date', label: 'Date', alignRight: false },
@@ -202,7 +202,6 @@ export default function OrdersPage() {
     const querySnapshot = await getDocs(collection(db, 'Orders'));
     const results = [];
 
-    console.log('Orders Snapshot :', querySnapshot);
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
@@ -237,7 +236,6 @@ export default function OrdersPage() {
       })
     );
     setOrders(results);
-    console.log('Orders ', results);
   };
 
   const getFormattedDate = (orderDate) => {

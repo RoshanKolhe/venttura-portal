@@ -123,7 +123,6 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
           onDataSubmit('User updated successfully');
         }
       } catch (err) {
-        console.log('firebaseEerro', err);
         setErrorMessage('Email already exists');
         setSuccessMessage('');
         handleOpenSnackBar();

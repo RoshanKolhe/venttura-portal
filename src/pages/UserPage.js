@@ -43,11 +43,11 @@ import CustomBox from '../common/CustomBox';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', alignRight: false },
+  { id: 'display_name', label: 'Name', alignRight: false },
   { id: 'email', label: 'Email', alignRight: false },
   { id: 'city', label: 'City', alignRight: false },
   { id: 'revenuegenerated', label: 'Total Revenue', alignRight: false },
-  { id: 'unitSold', label: 'Units Sold', alignRight: false },
+  { id: 'unitsSold', label: 'Units Sold', alignRight: false },
   { id: '' },
 ];
 
@@ -116,7 +116,6 @@ export default function UserPage() {
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
-
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
       const newSelecteds = users.map((n) => n.name);

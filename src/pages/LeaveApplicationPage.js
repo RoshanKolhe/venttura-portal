@@ -75,7 +75,6 @@ function applySortFilter(array, comparator, query) {
     if (order !== 0) return order;
     return a[1] - b[1];
   });
-  console.log('query', query);
   if (query) {
     return filter(array, (_user) => _user?.creator.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
@@ -112,8 +111,6 @@ export default function LeaveApplicationPage() {
     setOpen(null);
   };
   const handleChangeStatusApprove = (e, selectedRow) => {
-    // console.log('Application state changed Approve Event', e);
-    // console.log('Application state changed Approve ', selectedRow);
     const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
 
     const newUser = {
@@ -121,7 +118,6 @@ export default function LeaveApplicationPage() {
     };
     updateDoc(docRef, newUser)
       .then(() => {
-        console.log('Application state changed to Approve', selectedRow);
         fetchData();
         handleCloseMenu();
       })
@@ -130,8 +126,6 @@ export default function LeaveApplicationPage() {
       });
   };
   const handleChangeStatusReject = (e, selectedRow) => {
-    // console.log('Application state changed Reject Event', e);
-    // console.log('Application state changed Reject ', selectedRow);
     const docRef = doc(firestore, 'leaveApplication', selectedRow.id);
 
     const newUser = {
@@ -139,7 +133,6 @@ export default function LeaveApplicationPage() {
     };
     updateDoc(docRef, newUser)
       .then(() => {
-        console.log('Application state changed to Rejected', selectedRow);
         fetchData();
         handleCloseMenu();
       })
@@ -193,7 +186,6 @@ export default function LeaveApplicationPage() {
   };
   const handleOnReload = (event) => {
     fetchData();
-    console.log('OnReload');
   };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orders.length) : 0;
@@ -207,11 +199,9 @@ export default function LeaveApplicationPage() {
     const querySnapshot = await getDocs(collection(db, 'leaveApplication'));
     const results = [];
 
-    console.log('leaveApplication Snapshot :', querySnapshot);
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
-        console.log('DATA :', data);
         const {id} = element;
         if (data.creator) {
           if (data.creator) {
@@ -228,7 +218,6 @@ export default function LeaveApplicationPage() {
       })
     );
     setOrders(results);
-    console.log('Leave ', results);
   };
 
   const getFormattedDate = (orderDate) => {

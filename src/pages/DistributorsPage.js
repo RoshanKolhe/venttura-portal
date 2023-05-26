@@ -47,13 +47,12 @@ import CustomBox from '../common/CustomBox';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Distributor Name', alignRight: false },
-  { id: 'address', label: 'Address', alignRight: false },
-  { id: 'contact', label: 'Contact', alignRight: false },
-  { id: 'contactPerson', label: 'Contact Person', alignRight: false },
-  { id: 'gstin', label: 'GSTIN', alignRight: false },
-  { id: 'location', label: 'Location', alignRight: false },
-
+  { id: 'VendorName', label: 'Distributor Name', alignRight: false },
+  { id: 'Address', label: 'Address', alignRight: false },
+  { id: 'DistrbutorContactNumber', label: 'Contact', alignRight: false },
+  { id: 'ContactPerson', label: 'Contact Person', alignRight: false },
+  { id: 'GSTIN', label: 'GSTIN', alignRight: false },
+  { id: 'Location', label: 'Location', alignRight: false },
   { id: '' },
 ];
 
@@ -147,20 +146,6 @@ export default function DistributorsPage() {
     setSelected([]);
   };
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
-    setSelected(newSelected);
-  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);

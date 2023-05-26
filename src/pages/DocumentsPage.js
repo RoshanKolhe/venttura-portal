@@ -49,9 +49,9 @@ import CustomBox from '../common/CustomBox';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'File Name', alignRight: false },
-  { id: 'link', label: 'View File', alignRight: false },
-  { id: 'category', label: 'Category Name', alignRight: false },
+  { id: 'fileName', label: 'File Name', alignRight: false },
+  { id: 'fileLink', label: 'View File', alignRight: false },
+  { id: 'categoryName', label: 'Category Name', alignRight: false },
   { id: '' },
 ];
 

@@ -162,7 +162,6 @@ export default function InventoryBuyerPage() {
       inventory: updatedData,
     };
     await updateDoc(docRef, buyer);
-    console.log(updatedData);
   };
 
   const handleItemChanged = (e, row, targetField) => {

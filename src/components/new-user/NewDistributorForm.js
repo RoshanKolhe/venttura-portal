@@ -32,7 +32,6 @@ import CommonSnackBar from '../../common/CommonSnackBar';
 import { app } from '../../firebase_setup/firebase';
 
 const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
-  console.log(initialValues);
   const location = useLocation();
   const navigate = useNavigate();
   const currentDate = new Date();
@@ -79,7 +78,6 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
         if (!initialValues) {
           const usersRef = collection(firestore, 'Distributor');
           const docRef = doc(usersRef);
-          console.log(usersRef);
           const newUser = {
             Address: values.Address,
             VendorName: values.VendorName,
@@ -88,7 +86,6 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
             Location: values.Location,
             GSTIN: values.GstIn || '',
           };
-          console.log(newUser);
           await setDoc(docRef, newUser);
           setLoading(false);
         } else {

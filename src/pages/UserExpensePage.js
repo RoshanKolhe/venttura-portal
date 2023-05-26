@@ -75,7 +75,6 @@ function applySortFilter(array, comparator, query) {
     if (order !== 0) return order;
     return a[1] - b[1];
   });
-  console.log('query', query);
   if (query) {
     return filter(array, (_user) => _user?.salesPerson.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
@@ -119,7 +118,6 @@ export default function UserExpensePage() {
     };
     updateDoc(docRef, newUser)
       .then(() => {
-        console.log('Application state changed to Approve', selectedRow);
         fetchData();
         handleCloseMenu();
       })
@@ -128,8 +126,6 @@ export default function UserExpensePage() {
       });
   };
   const handleChangeStatusReject = (e, selectedRow) => {
-    // console.log('Application state changed Reject Event', e);
-    // console.log('Application state changed Reject ', selectedRow);
     const docRef = doc(firestore, 'expenses', selectedRow.id);
 
     const newUser = {
@@ -137,7 +133,6 @@ export default function UserExpensePage() {
     };
     updateDoc(docRef, newUser)
       .then(() => {
-        console.log('Application state changed to Rejected', selectedRow);
         fetchData();
         handleCloseMenu();
       })
@@ -191,7 +186,6 @@ export default function UserExpensePage() {
   };
   const handleOnReload = (event) => {
     fetchData();
-    console.log('OnReload');
   };
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orders.length) : 0;
@@ -214,14 +208,12 @@ export default function UserExpensePage() {
           const referenceData = referenceDocSnap.data();
 
           data.salesPerson = referenceData;
-          console.log({ id, ...data });
           results.push({ id, ...data });
           // spread operator
         }
       })
     );
     setOrders(results);
-    console.log('Leave ', results);
   };
 
   const getFormattedDate = (orderDate) => {
