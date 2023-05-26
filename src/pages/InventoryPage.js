@@ -50,6 +50,7 @@ import CustomBox from '../common/CustomBox';
 
 const TABLE_HEAD = [
   { id: 'productName', label: 'Product Name', alignRight: false },
+  { id: 'variationName', label: 'Variation', alignRight: false },
   { id: 'inventory', label: 'Inventory', alignRight: false },
 ];
 const useStyles = makeStyles((theme) => ({
@@ -241,7 +242,7 @@ export default function InventoryPage() {
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, productName: name, inventory } = row;
+                    const { id, productName: name, variationName, inventory } = row;
                     const selectedUser = selected.indexOf(name) !== -1;
 
                     return (
@@ -253,6 +254,12 @@ export default function InventoryPage() {
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
                             {name}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell component="th" scope="row">
+                          <Typography variant="subtitle2" noWrap>
+                            {variationName}
                           </Typography>
                         </TableCell>
 

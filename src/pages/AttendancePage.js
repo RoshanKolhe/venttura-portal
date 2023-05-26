@@ -27,6 +27,7 @@ import {
   TableContainer,
   TablePagination,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
@@ -109,7 +110,7 @@ export default function AttendancePage({ styles }) {
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarErrorMsg, setSnackbarErrorMsg] = useState('');
 
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('users');
 
   const [openSnackBar, setOpenSnackBar] = useState(false);
 
@@ -245,7 +246,9 @@ export default function AttendancePage({ styles }) {
             userTableRow.push(
               <>
                 <TableCell align="left">
-                  <Avatar className={`${classes.present}`}>P</Avatar>
+                  <Tooltip title={`Lcoaion - ${attendanceData?.location}`} placement="top">
+                    <Avatar className={`${classes.present}`}>P</Avatar>
+                  </Tooltip>
                   {!attendanceData?.status ? (
                     <>
                       <div style={{ display: 'flex' }}>
@@ -390,7 +393,7 @@ export default function AttendancePage({ styles }) {
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                     const { productrefrence, quantity, OrderDate, totalAmount } = row;
                     const selectedUser = selected.indexOf(row?.id) !== -1;
-
+                    console.log(row);
                     return (
                       <TableRow hover key={row?.id} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
@@ -399,7 +402,7 @@ export default function AttendancePage({ styles }) {
 
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {row.display_name}
+                            {row?.display_name}
                           </Typography>
                         </TableCell>
 
