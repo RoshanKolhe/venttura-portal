@@ -3,7 +3,7 @@ import { Field, useFormik } from 'formik';
 import * as yup from 'yup';
 import 'react-phone-input-2/lib/material.css';
 import SaveIcon from '@mui/icons-material/Save';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import {
   FormHelperText,
   Button,
@@ -29,6 +29,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import VideoLabelIcon from '@mui/icons-material/VideoLabel';
+import axiosInstance from '../../helpers/axios';
 import zipPlaceholder from '../../assests/placeholders/zip.png';
 import { getCurrentMonthAndYear, variationJson } from '../../utils/constants';
 import LoadingScreen from '../../common/LoadingScreen';
@@ -76,8 +77,25 @@ const NewDocumentForm = ({ initialValues, handleClose, onDataSubmit }) => {
       setLoading(true);
       try {
         if (!initialValues) {
+          const inputData = {
+            fileName: values?.FileName,
+            fileLink: values?.fileLink,
+            collectionRefrence: categories.find((item) => item.id === values?.Category).categoryRef,
+            type: fileType,
+          };
+          const fileRef = collection(firestore, 'Files');
+          const docRef = doc(fileRef);
+          await setDoc(docRef, inputData);
           setLoading(false);
         } else {
+          const docRef = doc(firestore, 'Files', initialValues?.id);
+          const inputData = {
+            fileName: values?.FileName,
+            fileLink: values?.fileLink,
+            collectionRefrence: categories.find((item) => item.id === values?.Category).categoryRef,
+            type: fileType,
+          };
+          await updateDoc(docRef, inputData);
           setLoading(false);
         }
         onDataSubmit(initialValues ? 'Document updated successfully' : 'Document created successfully');
@@ -91,39 +109,38 @@ const NewDocumentForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     setFile(selectedFile);
+    console.log(selectedFile);
 
     // Extract file type
     const fileType = selectedFile.type.split('/')[0];
     setFileType(fileType);
   };
 
-  const handleUpload = async () => {
+  const handleFileUpload = () => {
     if (file) {
-      try {
-        // Create a storage reference with a unique filename
-        const storageRef = ref(storage, `/files/${file.name}`)
-
-        // Upload file to Firebase Storage
-        await uploadBytes(storageRef, file);
-
-        // Get the download URL for the uploaded file
-        const downloadURL = await getDownloadURL(storageRef);
-
-        formik.setFieldValue('fileLink', downloadURL);
-      } catch (error) {
-        console.error('Error uploading file:', error);
-      }
-    } else {
-      console.log('No file selected');
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+      axiosInstance
+        .post('upload', formData)
+        .then((res) => {
+          formik.setFieldValue('fileLink', res.data.fileUrl);
+          setSuccessMessage('File uploaded successfully');
+          setErrorMessage('');
+          handleOpenSnackBar();
+        })
+        .catch((err) => {
+          setErrorMessage(err.response.data.error.message);
+          handleOpenSnackBar();
+        });
     }
   };
 
   const handleChange = (event) => {
     formik.setFieldValue('Category', event.target.value);
   };
-
+  console.log(fileType);
   const fetchCategories = async () => {
-    const querySnapshot = await   getDocs(collection(firestore, 'Categories'));
+    const querySnapshot = await getDocs(collection(firestore, 'Categories'));
     const results = [];
     // eslint-disable-next-line no-restricted-syntax
     querySnapshot.docs.map(async (element) => {
@@ -176,9 +193,9 @@ const NewDocumentForm = ({ initialValues, handleClose, onDataSubmit }) => {
               helperText={formik.touched.FileName && formik.errors.FileName}
             />
           </Grid>
-          <Grid item xs={12} lg={12} margin={2}>
+          <Grid item xs={12} lg={12} margin={2} style={{ display: 'flex', justifyContent: 'space-between' }}>
             <input type="file" onChange={handleFileChange} />
-            <Button variant="contained" onClick={handleUpload}>
+            <Button variant="contained" onClick={handleFileUpload}>
               Upload File
             </Button>
           </Grid>
@@ -197,7 +214,7 @@ const NewDocumentForm = ({ initialValues, handleClose, onDataSubmit }) => {
                   objectFit: 'contain',
                 }}
                 alt="placeholder"
-                src={fileType === 'pdf' ? zipPlaceholder : formik?.values?.fileLink}
+                src={fileType === 'image' ? formik?.values?.fileLink : zipPlaceholder}
               />
             </Grid>
           )}

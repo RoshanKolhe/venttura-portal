@@ -58,7 +58,7 @@ export default function DashboardAppPage() {
             }}
             style={{ cursor: 'pointer' }}
           >
-            <AppWidgetSummary title="Buyers" total={totalCount?.buyersCount} icon={'mdi:account-check'} />
+            <AppWidgetSummary title="Buyers" total={`${totalCount?.buyersCount}`} icon={'mdi:account-check'} />
           </Grid>
 
           <Grid
@@ -73,7 +73,7 @@ export default function DashboardAppPage() {
           >
             <AppWidgetSummary
               title="Distributors"
-              total={totalCount?.distributorCount}
+              total={`${totalCount?.distributorCount}`}
               color="info"
               icon={'mdi:account-cash-outline'}
             />
@@ -91,16 +91,15 @@ export default function DashboardAppPage() {
           >
             <AppWidgetSummary
               title="Orders"
-              total={totalCount?.totalOrdersPlaced}
+              total={`${totalCount?.totalOrdersPlaced}`}
               color="warning"
               icon={'material-symbols:order-approve'}
             />
           </Grid>
 
           <Grid item xs={12} md={12} lg={12}>
-            <AttendancePage styles={{margin:0,padding:0}}/>
+            <AttendancePage styles={{ margin: 0, padding: 0 }} />
           </Grid>
-          
         </Grid>
       </Container>
     </>
