@@ -144,6 +144,7 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
     setSelectedDate(date);
     formik.setFieldValue('monthAndYear', date);
   };
+
   const handleFocusDateTimePicker = () => {
     if (dateTimePickerRef.current) {
       dateTimePickerRef.current.focus();
@@ -250,12 +251,7 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
                 value={selectedDate}
                 onChange={handleDateChange}
                 renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    style={{ width: '100%' }}
-                    error={Boolean(formik?.errors?.monthAndYear)}
-                    inputRef={dateTimePickerRef}
-                  />
+                  <TextField {...params} style={{ width: '100%' }} error={Boolean(formik?.errors?.monthAndYear)} />
                 )}
               />
               <FormHelperText error>{formik?.errors?.monthAndYear}</FormHelperText>
