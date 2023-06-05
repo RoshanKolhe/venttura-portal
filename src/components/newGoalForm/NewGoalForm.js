@@ -153,13 +153,13 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
   const handleItemChanged = (e, row, targetField) => {
     const foundIndex = defaultGoals.findIndex((x) => x.id === row.id);
     const rowData = defaultGoals[foundIndex];
-    const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value) };
+    const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value || 0) };
     const updatedFilteredGoals = defaultGoals.map((item, index) => {
       if (index === foundIndex) return { ...updatedData };
       return { ...item };
     });
     const rowStateData = goalsWithProductData[foundIndex];
-    const updatedrowStateData = { ...rowStateData, [targetField]: parseFloat(e.target.value) };
+    const updatedrowStateData = { ...rowStateData, [targetField]: parseFloat(e.target.value || 0) };
     const updatedStateGoals = goalsWithProductData.map((item, index) => {
       if (index === foundIndex) return { ...updatedrowStateData };
       return { ...item };
@@ -213,6 +213,7 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
         );
 
         const filteredAndNonNullData = filteredData.filter(Boolean);
+        console.log(filteredAndNonNullData);
         setGoalsWithProductData(filteredAndNonNullData);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -263,13 +264,15 @@ const NewGoalForm = ({ handleClose, onDataSubmit }) => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Product Name</TableCell>
+                    <TableCell>Variation Name</TableCell>
                     <TableCell>Goal Quantity</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {goalsWithProductData.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>{product.productrefrence.productRefrence.ProductName}</TableCell>
+                    <TableRow key={product?.id}>
+                      <TableCell>{product?.productrefrence?.productRefrence?.ProductName}</TableCell>
+                      <TableCell>{product?.productrefrence?.variationName}</TableCell>
                       <TableCell>
                         <TextField
                           InputProps={{ disableUnderline: true }}
