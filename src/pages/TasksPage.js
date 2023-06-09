@@ -1,11 +1,12 @@
+/* eslint-disable no-unreachable */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable object-shorthand */
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useEffect, useState } from 'react';
-import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
-import { Icon } from '@iconify/react';
-import plusFill from '@iconify/icons-eva/plus-fill';
-
+import { getFirestore, collection, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore';
 // @mui
 import {
   Card,
@@ -25,33 +26,35 @@ import {
   IconButton,
   TableContainer,
   TablePagination,
+  TextField,
   Modal,
 } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { makeStyles } from '@material-ui/core/styles';
 // components
-import { collection, doc, getDoc, getDocs, getFirestore } from 'firebase/firestore';
-import CommonSnackBar from '../common/CommonSnackBar';
-import NewUserForm from '../components/new-user/NewUserForm';
+import axiosInstance from '../helpers/axios';
+import CustomBox from '../common/CustomBox';
+import NewGoalForm from '../components/newGoalForm/NewGoalForm';
+import { getCurrentMonthAndYear } from '../utils/constants';
+import { app } from '../firebase_setup/firebase';
+import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
+import CommonSnackBar from '../common/CommonSnackBar';
 // sections
-import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 // mock
-import users from '../_mock/user';
-import CustomBox from '../common/CustomBox';
 
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'display_name', label: 'Name', alignRight: false },
-  { id: 'email', label: 'Email', alignRight: false },
-  { id: 'city', label: 'City', alignRight: false },
-  { id: 'revenuegenerated', label: 'Total Revenue', alignRight: false },
-  { id: 'unitsSold', label: 'Units Sold', alignRight: false },
-  { id: '' },
+  { id: 'Title', label: 'Title', alignRight: false },
+  { id: 'Notes', label: 'Notes', alignRight: false },
+  { id: 'status', label: 'Status', alignRight: false },
+  { id: 'TaskDateAndTime', label: 'Task Date', alignRight: false },
 ];
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -77,21 +80,40 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user.display_name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user?.productName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
 
-export default function UserPage() {
+const useStyles = makeStyles((theme) => ({
+  textField: {
+    outline: 'none',
+    border: 'none',
+    width: 'auto',
+    minWidth: '180px',
+    margin: '0px',
+    paddingLeft: '15px',
+  },
+}));
+
+export default function TasksPage() {
   const [open, setOpen] = useState(null);
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
   const [msg, setMsg] = useState('');
   const [openModal, setOpenMdal] = useState(false);
-  const [page, setPage] = useState(0);
-  const navigate = useNavigate();
-  const [order, setOrder] = useState('asc');
-  const [users, setUsers] = useState([]);
-  const [selected, setSelected] = useState([]);
+  const params = useParams();
   const [selectedRow, setSelectedRow] = useState();
+  const [usersTasksData, setUserTasksData] = useState([]);
+  const [order, setOrder] = useState('asc');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const handleOpen = () => setOpenMdal(true);
+
+  const handleClose = () => setOpenMdal(false);
+
+  const [selected, setSelected] = useState([]);
+
   const [orderBy, setOrderBy] = useState('name');
 
   const [filterName, setFilterName] = useState('');
@@ -101,43 +123,29 @@ export default function UserPage() {
 
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
-  const db = getFirestore();
-  const handleOpenMenu = (event, row) => {
-    setSelectedRow(row);
-    setOpen(event.currentTarget);
-  };
+  const [currentMonthAndYear, setCurrentMonthAndYear] = useState(getCurrentMonthAndYear());
+  const classes = useStyles();
 
   const handleCloseMenu = () => {
     setOpen(null);
   };
-
+  const handleViewPopUpClick = () => {
+    console.log(selectedRow);
+    navigate(`/orders/${selectedRow.id}`);
+  };
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
+
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = users.map((n) => n.name);
+      const newSelecteds = usersTasksData.map((n) => n.name);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
-    setSelected(newSelected);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -153,71 +161,92 @@ export default function UserPage() {
     setPage(0);
     setFilterName(event.target.value);
   };
-  const handleOpen = () => setOpenMdal(true);
-  const handleClose = () => setOpenMdal(false);
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - usersTasksData.length) : 0;
 
-  const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
+  const filteredUsers = applySortFilter(usersTasksData, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
-  const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'users'));
-    const results = [];
-    // eslint-disable-next-line no-restricted-syntax
-    querySnapshot.docs.map(async (element) => {
-      const data = element.data();
-      results.push({ id: element.id, ...data });
-    });
-    const filteredData = results.filter((obj) => !obj.permissions || !obj.permissions.includes('admin'));
-
-    setUsers(filteredData);
+  const handleGoalUpdate = async (e, row) => {
+    const updatedData = usersTasksData.map(({ id, ...rest }) => rest);
+    const payloadData = {
+      userId: params.id,
+      userGoals: updatedData,
+      currentMonthAndYear: currentMonthAndYear,
+    };
+    axiosInstance
+      .post('/addUpdateNewUserGoals', payloadData)
+      .then((res) => {})
+      .catch((err) => {});
   };
 
-  const handleEditClick = () => {
-    setOpen(null);
-    handleOpen();
+  const fetchData = () => {
+    setUserTasksData([]);
+    const inputData = {
+      userId: params.id,
+    };
+    axiosInstance
+      .post('/getUserTasks', inputData)
+      .then((res) => {
+        setUserTasksData(res.data);
+      })
+      .catch((err) => {
+        setUserTasksData([]);
+      });
   };
 
-  const handleGoalClick = () => {
-    navigate(`/users/goals/${selectedRow.id}`);
-  };
-
-  const handleTaskClick = () => {
-    navigate(`/users/tasks/${selectedRow.id}`);
+  const getFormattedDate = (firebaseDate) => {
+    if (firebaseDate) {
+      const date = new Date(firebaseDate._seconds * 1000 + firebaseDate._nanoseconds / 1000000);
+      const formattedDate = date.toLocaleString(); //  change the format to your preferred date format
+      return formattedDate;
+    }
+    return '';
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const date = new Date(selectedDate);
+    setCurrentMonthAndYear(`${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`);
+  }, [selectedDate]);
 
+  useEffect(() => {
+    fetchData();
+  }, [currentMonthAndYear]);
+
+  useEffect(() => {
+    fetchData();
+  }, [params.id]);
   return (
     <>
       <Helmet>
-        <title> Users | Admin </title>
+        <title> Tasks | Admin </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Users
+            Tasks
           </Typography>
-          <Button
+          {/* <Button
             variant="contained"
-            component={RouterLink}
-            to="#"
-            startIcon={<Icon icon={plusFill} />}
+            startIcon={<Iconify icon="eva:plus-fill" />}
             onClick={() => {
-              setSelectedRow();
               handleOpen();
             }}
           >
-            New User
-          </Button>
+            New Tasks
+          </Button> */}
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            isFilter
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
@@ -227,47 +256,33 @@ export default function UserPage() {
                   order={order}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
-                  rowCount={users.length}
+                  rowCount={usersTasksData.length}
                   numSelected={selected.length}
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, display_name: name, email, city, revenuegenerated, unitsSold } = row;
-                    const selectedUser = selected.indexOf(name) !== -1;
+                    const { Title, Notes, TaskDateAndTime, isOrdered, status } = row;
+                    const selectedUser = selected.indexOf(row?.id) !== -1;
 
                     return (
-                      <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
+                      <TableRow hover key={row?.id} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
-                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, name)} />
+                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, row?.id)} />
                         </TableCell> */}
 
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {name}
+                            {Title}
                           </Typography>
                         </TableCell>
 
-                        <TableCell align="left">{email}</TableCell>
+                        <TableCell align="left">{Notes}</TableCell>
 
-                        <TableCell align="left">{city}</TableCell>
+                        <TableCell align="left">{status}</TableCell>
 
-                        <TableCell align="left">{revenuegenerated}</TableCell>
-
-                        <TableCell align="left">{unitsSold}</TableCell>
-
-                        <TableCell align="right">
-                          <IconButton
-                            size="large"
-                            color="inherit"
-                            onClick={(e) => {
-                              handleOpenMenu(e, row);
-                            }}
-                          >
-                            <Iconify icon={'eva:more-vertical-fill'} />
-                          </IconButton>
-                        </TableCell>
+                        <TableCell align="left">{getFormattedDate(TaskDateAndTime)}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -278,7 +293,7 @@ export default function UserPage() {
                   )}
                 </TableBody>
 
-                {isNotFound && (
+                {isNotFound && usersTasksData.length === 0 && (
                   <TableBody>
                     <TableRow>
                       <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
@@ -308,14 +323,13 @@ export default function UserPage() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={users.length}
+            count={usersTasksData.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
-
         <Modal
           open={openModal}
           onClose={handleClose}
@@ -323,7 +337,7 @@ export default function UserPage() {
           aria-describedby="modal-modal-description"
         >
           <CustomBox>
-            <NewUserForm
+            <NewGoalForm
               handleClose={handleClose}
               onDataSubmit={(msg) => {
                 handleClose();
@@ -335,6 +349,12 @@ export default function UserPage() {
             />
           </CustomBox>
         </Modal>
+        <CommonSnackBar
+          openSnackBar={openSnackBar}
+          handleCloseSnackBar={handleCloseSnackBar}
+          msg={msg}
+          severity="success"
+        />
       </Container>
 
       <Popover
@@ -355,25 +375,16 @@ export default function UserPage() {
           },
         }}
       >
-        <MenuItem onClick={handleEditClick}>
+        <MenuItem onClick={() => handleViewPopUpClick()}>
           <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
+          View
         </MenuItem>
-        <MenuItem onClick={handleGoalClick}>
-          <Iconify icon={'octicon:goal-16'} sx={{ mr: 2 }} />
-          Goals
-        </MenuItem>
-        <MenuItem onClick={handleTaskClick}>
-          <Iconify icon={'clarity:tasks-solid'} sx={{ mr: 2 }} />
-          Tasks
-        </MenuItem>
+
+        {/* <MenuItem sx={{ color: 'error.main' }}>
+          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
+          Delete
+        </MenuItem> */}
       </Popover>
-      <CommonSnackBar
-        openSnackBar={openSnackBar}
-        handleCloseSnackBar={handleCloseSnackBar}
-        msg={msg}
-        severity="success"
-      />
     </>
   );
 }

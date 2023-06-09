@@ -1,54 +1,32 @@
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
 
-import {
-  //   Card,
-  //   Table,
-  //   Stack,
-  //   Paper,
-  //   Avatar,
-  //   Button,
-  //   Popover,
-  //   Checkbox,
-  //   TableRow,
-  //   MenuItem,
-  //   TableBody,
-  //   TableCell,
-  //   Container,
-  Grid,
-  Typography,
-  //   IconButton,
-  //   TableContainer,
-  //   TablePagination,
-} from '@mui/material';
+import { Grid, Modal, Typography } from '@mui/material';
 
 import { useNavigate, useParams } from 'react-router-dom';
+import CommonSnackBar from '../common/CommonSnackBar';
+import CustomBox from '../common/CustomBox';
+import EditOrderForm from '../components/Orders/EditOrderForm';
 
 export default function ViewDetails() {
   const params = useParams();
   const [data, setData] = useState([]);
-
-  // const [open, setOpen] = useState(null);
-  // const navigate = useNavigate();
-  // const [page, setPage] = useState(0);
-
-  // const [selectedRow, setSelectedRow] = useState();
-
-  // const [order, setOrder] = useState('asc');
-
-  // const [orders, setOrders] = useState([]);
-
-  // const [selected, setSelected] = useState([]);
-
-  // const [orderBy, setOrderBy] = useState('name');
-
-  // const [filterName, setFilterName] = useState('');
-
-  // const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  const navigate = useNavigate();
+  const [openModal, setOpenMdal] = useState(false);
+  const handleOpen = () => setOpenMdal(true);
+  const [msg, setMsg] = useState('');
+  const handleClose = () => setOpenMdal(false);
   const db = getFirestore();
   const collectionName = 'Orders';
   const documentId = params.id;
+  const [openSnackBar, setOpenSnackBar] = useState(false);
+
+  const handleOpenSnackBar = () => setOpenSnackBar(true);
+  const handleCloseSnackBar = () => setOpenSnackBar(false);
+
+  const handleEditClick = () => {
+    handleOpen();
+  };
   // eslint-disable-next-line consistent-return
   const getDataFromFirebase = async (collectionName, documentId) => {
     try {
@@ -58,20 +36,20 @@ export default function ViewDetails() {
       const results = [];
       if (documentSnapshot.data()) {
         const data = documentSnapshot.data();
-        const {id} = documentSnapshot;
+        const { id } = documentSnapshot;
 
         if (data.status) {
           if (data.BuyerRefrence) {
             const referenceDoc = doc(firestore, data.BuyerRefrence.path);
             const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
+            const referenceData = { ...referenceDocSnap.data(), id: referenceDocSnap.id };
 
             data.BuyerRefrence = referenceData;
           }
           if (data.DistributorRefrence) {
             const referenceDoc = doc(firestore, data.DistributorRefrence.path);
             const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
+            const referenceData = { ...referenceDocSnap.data(), id: referenceDocSnap.id };
 
             data.DistributorRefrence = referenceData;
           }
@@ -85,12 +63,10 @@ export default function ViewDetails() {
           if (data.products) {
             // eslint-disable-next-line no-plusplus
             for (let i = 0; i < data.products.length; i++) {
-              // console.log('data.products.', data.products[i].productRefrence.path);
               const referenceDoc = doc(firestore, data.products[i].productRefrence.path);
               // eslint-disable-next-line no-await-in-loop
               const referenceDocSnap = await getDoc(referenceDoc);
               const referenceData = referenceDocSnap.data();
-              // console.log('referenceData', referenceData);
 
               data.products[i].productRefrence = referenceData;
             }
@@ -98,12 +74,10 @@ export default function ViewDetails() {
           if (data.products) {
             // eslint-disable-next-line no-plusplus
             for (let i = 0; i < data.products.length; i++) {
-              // console.log('data.products.', data.products[i].productRefrence.path);
               const referenceDoc = doc(firestore, data.products[i].variationRefrence.path);
               // eslint-disable-next-line no-await-in-loop
               const referenceDocSnap = await getDoc(referenceDoc);
               const referenceData = referenceDocSnap.data();
-              // console.log('referenceData', referenceData);
 
               data.products[i].variationRefrence = referenceData;
             }
@@ -121,7 +95,6 @@ export default function ViewDetails() {
       return null;
     }
   };
-  // ######################################################
 
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
@@ -133,10 +106,8 @@ export default function ViewDetails() {
   };
 
   useEffect(() => {
-    // fetchData();
     getDataFromFirebase(collectionName, documentId);
   }, []);
-
   return (
     <>
       {data.map((row) => {
@@ -154,9 +125,27 @@ export default function ViewDetails() {
 
         return (
           <>
-            <Grid container px={20} style={{ width: '100%', color: '#757575 ' }}>
-              <Grid item xs={12} mb={1}>
-                <Typography variant="h6" style={{ color: '', fontWeight: '700' }}>
+            <Grid container px={10} style={{ color: '#757575 ' }}>
+              <Grid item xs={12}>
+                <Typography
+                  variant="h6"
+                  onClick={() => {
+                    handleEditClick();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignITems: 'center',
+                    justifyContent: 'end',
+                    cursor: 'pointer',
+                    color: '#007FFF',
+                    fontWeight: '500px',
+                  }}
+                >
+                  Edit
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={12} mb={1}>
+                <Typography variant="h6" style={{ fontWeight: '700' }}>
                   Buyers Details
                 </Typography>
               </Grid>
@@ -201,50 +190,49 @@ export default function ViewDetails() {
                 } = product;
 
                 return (
-                  <div
-                    key={index}
-                    style={{
-                      display: 'flex',
-                      border: '2px solid',
-                      borderRadius: '5px',
-                      borderColor: '#e5e5e5',
-                      // #c8c8c8
-                      // margin: '25px',
-                      marginTop: '25px',
-                      padding: '20px',
-                      width: '100%',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Grid item xs={12} mt={0}>
-                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
-                        {productRefrence.ProductName}
-                      </Typography>
+                  <Grid item xs={12} marginBottom={5}>
+                    <Grid container style={{ padding: '20px', border: '2px solid' }}>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        mt={0}
+                        style={{ justifyContent: 'center', display: 'flex', alignItems: 'center' }}
+                      >
+                        <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                          {productRefrence?.ProductName}
+                        </Typography>
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={3}
+                        mt={0}
+                        style={{ justifyContent: 'center', display: 'flex', alignItems: 'center' }}
+                      >
+                        <Typography>
+                          {variationRefrence?.variationName} (₹{pricePerUnit})
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={3} mt={0}>
+                        <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                          Qty: {quantity}
+                          <br />
+                        </Typography>
+                        <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                          Discount: {percentDiscount}%
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={3} mt={0}>
+                        <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                          ₹{totalBeforeDiscount}
+                        </Typography>
+                        <Typography style={{ justifyContent: 'center', display: 'flex' }}>
+                          Item Total: ₹{DiscountedPrice}
+                        </Typography>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} mt={0}>
-                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
-                        {variationRefrence.variationName} (₹{pricePerUnit})
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} mt={0}>
-                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
-                        Qty: {quantity}
-                        <br />
-                      </Typography>
-                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
-                        Discount: {percentDiscount}%
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} mt={0}>
-                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
-                        ₹{totalBeforeDiscount}
-                      </Typography>
-                      <Typography style={{ justifyContent: 'center', display: 'flex' }}>
-                        Item Total: ₹{DiscountedPrice}
-                      </Typography>
-                    </Grid>
-                  </div>
+                  </Grid>
                 );
               })}
 
@@ -292,6 +280,31 @@ export default function ViewDetails() {
                 </div>
               </Grid>
             </Grid>
+            <Modal
+              open={openModal}
+              onClose={handleClose}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+              <CustomBox>
+                <EditOrderForm
+                  handleClose={handleClose}
+                  onDataSubmit={(msg) => {
+                    handleClose();
+                    getDataFromFirebase(collectionName, documentId);
+                    setMsg(msg);
+                    handleOpenSnackBar();
+                  }}
+                  initialValues={data[0]}
+                />
+              </CustomBox>
+            </Modal>
+            <CommonSnackBar
+              openSnackBar={openSnackBar}
+              handleCloseSnackBar={handleCloseSnackBar}
+              msg={msg}
+              severity="success"
+            />
           </>
         );
       })}
