@@ -42,16 +42,13 @@ import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 import CommonSnackBar from '../common/CommonSnackBar';
-// sections
-// mock
 
-// ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'product_name', label: 'Product Name', alignRight: false },
-  { id: 'variation', label: 'Variation', alignRight: false },
-  { id: 'goal_quantity', label: 'Goal Quantity', alignRight: false },
-  { id: 'quantity_achieved', label: 'Quantity Achieved', alignRight: false },
+  { id: 'productName', label: 'Product Name', alignRight: false },
+  { id: 'variationName', label: 'Variation', alignRight: false },
+  { id: 'goalQuantity', label: 'Goal Quantity', alignRight: false },
+  { id: 'quantity', label: 'Quantity Achieved', alignRight: false },
 ];
 
 // ----------------------------------------------------------------------
@@ -223,6 +220,10 @@ export default function GolasPage() {
       });
   };
 
+  const handleReload = () => {
+    fetchData();
+  };
+
   useEffect(() => {
     const date = new Date(selectedDate);
     console.log(date);
@@ -266,6 +267,7 @@ export default function GolasPage() {
             onFilterName={handleFilterByName}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
+            onReload={handleReload}
           />
 
           <Scrollbar>

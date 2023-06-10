@@ -226,7 +226,6 @@ export default function UserPage() {
             filterName={filterName}
             onFilterName={handleFilterByName}
             onReload={handleReload}
-         
           />
 
           <Scrollbar>

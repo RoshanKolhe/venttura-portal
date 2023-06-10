@@ -171,6 +171,10 @@ export default function CategoriesPage() {
     setCategories(results);
   };
 
+  const handleReload = () => {
+    fetchData();
+  };
+
   const handleEditClick = () => {
     setOpen(null);
     handleOpen();
@@ -206,7 +210,12 @@ export default function CategoriesPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>

@@ -202,7 +202,7 @@ export default function LeaveApplicationPage() {
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
-        const {id} = element;
+        const { id } = element;
         if (data.creator) {
           if (data.creator) {
             const referenceDoc = doc(db, data.creator.path);

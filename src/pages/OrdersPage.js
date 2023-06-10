@@ -197,7 +197,6 @@ export default function OrdersPage() {
   //   setOrders(results);
   // };
 
-
   const fetchData = async () => {
     const querySnapshot = await getDocs(collection(db, 'Orders'));
     const results = [];
@@ -205,7 +204,7 @@ export default function OrdersPage() {
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
-        const {id} = element;
+        const { id } = element;
         if (data.status) {
           if (data.BuyerRefrence) {
             const referenceDoc = doc(db, data.BuyerRefrence.path);
@@ -238,6 +237,10 @@ export default function OrdersPage() {
     setOrders(results);
   };
 
+  const handleReload = () => {
+    fetchData();
+  };
+
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
@@ -268,7 +271,12 @@ export default function OrdersPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>

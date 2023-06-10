@@ -146,7 +146,6 @@ export default function DistributorsPage() {
     setSelected([]);
   };
 
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -177,6 +176,10 @@ export default function DistributorsPage() {
       results.push({ id: element.id, ...data });
     });
     setUsers(results);
+  };
+
+  const handleReload = () => {
+    fetchData();
   };
 
   const handleEditClick = () => {
@@ -218,7 +221,12 @@ export default function DistributorsPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>

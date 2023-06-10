@@ -165,7 +165,6 @@ export default function BuyersPage() {
     setSelected([]);
   };
 
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -197,6 +196,10 @@ export default function BuyersPage() {
     });
     console.log(results);
     setUsers(results);
+  };
+
+  const handleReload = () => {
+    fetchData();
   };
 
   const handleEditClick = () => {
@@ -237,7 +240,12 @@ export default function BuyersPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>

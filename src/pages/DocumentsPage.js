@@ -189,6 +189,11 @@ export default function DocumentsPage() {
     );
     setDocuments(results);
   };
+
+  const handleReload = () => {
+    fetchData();
+  };
+
   const handleEditClick = () => {
     setOpen(null);
     handleOpen();
@@ -224,7 +229,12 @@ export default function DocumentsPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleReload}
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>
