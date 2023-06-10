@@ -174,6 +174,10 @@ export default function UserPage() {
     setUsers(filteredData);
   };
 
+  const handleReload = () => {
+    fetchData();
+  };
+
   const handleEditClick = () => {
     setOpen(null);
     handleOpen();
@@ -217,7 +221,13 @@ export default function UserPage() {
         </Stack>
 
         <Card>
-          <ListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
+          <ListToolbar
+            numSelected={selected.length}
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            onReload={handleReload}
+         
+          />
 
           <Scrollbar>
             <TableContainer sx={{ minWidth: 800 }}>

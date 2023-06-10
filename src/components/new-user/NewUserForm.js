@@ -41,6 +41,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const year = currentDate.getFullYear();
   const auth = getAuth();
+  const { currentUser } = auth;
   const [showPassword, setShowPassword] = useState(false);
   const formattedDate = `${month}-${year}`;
   const [openSnackBar, setOpenSnackBar] = useState(false);
@@ -85,6 +86,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
     enableReinitialize: true,
     validationSchema: userFormValidationSchema,
     onSubmit: async (values) => {
+      const token = await currentUser.getIdToken();
       try {
         setLoading(true);
         if (!initialValues) {
@@ -118,11 +120,12 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
             email: values.email,
             city: values.city,
           };
-          await updateDoc(docRef, newUser);
+          await updateDoc(docRef, newUser, token);
           setLoading(false);
           onDataSubmit('User updated successfully');
         }
       } catch (err) {
+        console.log(err);
         setErrorMessage('Email already exists');
         setSuccessMessage('');
         handleOpenSnackBar();

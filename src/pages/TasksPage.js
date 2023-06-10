@@ -80,7 +80,7 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user?.productName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user?.Title.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
@@ -103,10 +103,11 @@ export default function TasksPage() {
   const [msg, setMsg] = useState('');
   const [openModal, setOpenMdal] = useState(false);
   const params = useParams();
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const [selectedRow, setSelectedRow] = useState();
   const [usersTasksData, setUserTasksData] = useState([]);
   const [order, setOrder] = useState('asc');
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const handleOpen = () => setOpenMdal(true);
 
@@ -184,6 +185,8 @@ export default function TasksPage() {
     setUserTasksData([]);
     const inputData = {
       userId: params.id,
+      startDate: startDate,
+      endDate: endDate,
     };
     axiosInstance
       .post('/getUserTasks', inputData)
@@ -195,6 +198,10 @@ export default function TasksPage() {
       });
   };
 
+  const handleReload = () => {
+    fetchData();
+  };
+
   const getFormattedDate = (firebaseDate) => {
     if (firebaseDate) {
       const date = new Date(firebaseDate._seconds * 1000 + firebaseDate._nanoseconds / 1000000);
@@ -203,19 +210,15 @@ export default function TasksPage() {
     }
     return '';
   };
-
-  useEffect(() => {
-    const date = new Date(selectedDate);
-    setCurrentMonthAndYear(`${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`);
-  }, [selectedDate]);
-
+  console.log(isNotFound);
   useEffect(() => {
     fetchData();
-  }, [currentMonthAndYear]);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchData();
   }, [params.id]);
+
   return (
     <>
       <Helmet>
@@ -241,11 +244,15 @@ export default function TasksPage() {
         <Card>
           <ListToolbar
             isFilter
+            isDateRange
             numSelected={selected.length}
             filterName={filterName}
             onFilterName={handleFilterByName}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+            onReload={handleReload}
+            startDate={startDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            setStartDate={setStartDate}
           />
 
           <Scrollbar>
@@ -293,7 +300,7 @@ export default function TasksPage() {
                   )}
                 </TableBody>
 
-                {isNotFound && usersTasksData.length === 0 && (
+                {isNotFound || (usersTasksData && usersTasksData.length === 0) ? (
                   <TableBody>
                     <TableRow>
                       <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
@@ -309,13 +316,13 @@ export default function TasksPage() {
                           <Typography variant="body2">
                             No results found for &nbsp;
                             <strong>&quot;{filterName}&quot;</strong>.
-                            <br /> Try checking for typos or using complete words.
+                            <br /> Try changing the start date or end date
                           </Typography>
                         </Paper>
                       </TableCell>
                     </TableRow>
                   </TableBody>
-                )}
+                ) : null}
               </Table>
             </TableContainer>
           </Scrollbar>

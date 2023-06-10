@@ -124,7 +124,6 @@ export default function AttendancePage({ styles }) {
 
   const db = getFirestore(app);
   const classes = useStyles();
-  
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -236,7 +235,7 @@ export default function AttendancePage({ styles }) {
             userTableRow.push(
               <>
                 <TableCell align="left">
-                  <Tooltip title={`Lcoaion - ${attendanceData?.location}`} placement="top">
+                  <Tooltip title={`Location - ${attendanceData?.location}`} placement="top">
                     <Avatar className={`${classes.present}`}>P</Avatar>
                   </Tooltip>
                   {!attendanceData?.status ? (
@@ -271,19 +270,25 @@ export default function AttendancePage({ styles }) {
           } else if (attendanceData?.status === 1) {
             userTableRow.push(
               <TableCell align="left">
-                <Avatar className={`${classes.present}`}>P</Avatar>
+                <Tooltip title={`Location - ${attendanceData?.location}`} placement="top">
+                  <Avatar className={`${classes.present}`}>P</Avatar>
+                </Tooltip>
               </TableCell>
             );
           } else if (attendanceData?.status === 2) {
             userTableRow.push(
               <TableCell align="left">
-                <Avatar className={`${classes.absent}`}>R</Avatar>
+                <Tooltip title={`Location - ${attendanceData?.location}`} placement="top">
+                  <Avatar className={`${classes.absent}`}>R</Avatar>
+                </Tooltip>
               </TableCell>
             );
           } else {
             userTableRow.push(
               <TableCell align="left">
-                <Avatar className={`${classes.absent}`}>A</Avatar>
+                <Tooltip title={`Location - ${attendanceData?.location}`} placement="top">
+                  <Avatar className={`${classes.absent}`}>A</Avatar>
+                </Tooltip>
               </TableCell>
             );
           }
