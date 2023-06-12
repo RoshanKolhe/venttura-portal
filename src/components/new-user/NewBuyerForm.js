@@ -3,6 +3,9 @@ import { Field, useFormik } from 'formik';
 import * as yup from 'yup';
 import 'react-phone-input-2/lib/material.css';
 import SaveIcon from '@mui/icons-material/Save';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import {
   FormHelperText,
   Button,
@@ -38,6 +41,7 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const year = currentDate.getFullYear();
   const auth = getAuth();
+  const { currentUser } = auth;
   const formattedDate = `${month}-${year}`;
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const firestore = getFirestore(app);
@@ -69,6 +73,8 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
       Address: initialValues?.Address || '',
       ContactNumber: initialValues?.ContactNumber || '',
       GSTIN: initialValues?.GSTIN || '',
+      anniversary: initialValues?.anniversary || null,
+      birthdate: initialValues?.birthdate || null,
     },
     enableReinitialize: true,
     validationSchema: buyerFormValidationSchema,
@@ -78,6 +84,7 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
         if (!initialValues) {
           const usersRef = collection(firestore, 'Buyers');
           const docRef = doc(usersRef);
+          const currentUserRef = doc(firestore, 'users', currentUser.uid);
           const newUser = {
             Address: values.Address,
             BuyerName: values.BuyerName,
@@ -86,6 +93,9 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
             Location: values.Location,
             GSTIN: values.GSTIN || '',
             Status: 'verified',
+            anniversary: values.anniversary || '',
+            birthdate: values.birthdate || '',
+            addBy: currentUserRef,
           };
           await setDoc(docRef, newUser);
           setLoading(false);
@@ -98,6 +108,8 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
             ContactPerson: values.ContactPerson,
             Location: values.Location,
             GSTIN: values.GSTIN || '',
+            anniversary: values.anniversary || '',
+            birthdate: values.birthdate || '',
           };
           await updateDoc(docRef, newUser);
           setLoading(false);
@@ -112,6 +124,38 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
 
   const handleChange = (event) => {
     formik.setFieldValue('Location', event.target.value);
+  };
+
+  const handleChangeAnniversaryDate = (event) => {
+    if (event) {
+      const selectedDate = new Date(event);
+
+      // Format the date
+      const formattedDate = selectedDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      formik.setFieldValue('anniversary', formattedDate);
+    } else {
+      formik.setFieldValue('anniversary', null);
+    }
+  };
+
+  const handleChangeBirthDate = (event) => {
+    if (event) {
+      const selectedDate = new Date(event);
+
+      // Format the date
+      const formattedDate = selectedDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      formik.setFieldValue('birthdate', formattedDate);
+    } else {
+      formik.setFieldValue('birthdate', null);
+    }
   };
 
   return (
@@ -225,6 +269,28 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
               <FormHelperText error>{formik?.touched?.Location && formik?.errors?.Location}</FormHelperText>
             </FormControl>
           </Grid>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Grid xs={12} lg={12} margin={2}>
+              <DateTimePicker
+                inputFormat="YYYY-MM-DD"
+                label="Birth Date"
+                value={formik.values.birthdate}
+                onChange={handleChangeBirthDate}
+                views={['year', 'month', 'day']}
+                renderInput={(params) => <TextField {...params} autoComplete="off" style={{ width: '100%' }} />}
+              />
+            </Grid>
+            <Grid xs={12} lg={12} margin={2}>
+              <DateTimePicker
+                inputFormat="YYYY-MM-DD"
+                label="Anniversary"
+                value={formik.values.anniversary}
+                onChange={handleChangeAnniversaryDate}
+                views={['year', 'month', 'day']}
+                renderInput={(params) => <TextField {...params} autoComplete="off" style={{ width: '100%' }} />}
+              />
+            </Grid>
+          </LocalizationProvider>
         </Grid>
         <Grid container>
           <Grid item margin={2}>
