@@ -28,6 +28,8 @@ import {
   TablePagination,
   TextField,
   Tooltip,
+  Modal,
+  Grid,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
@@ -35,6 +37,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoneIcon from '@mui/icons-material/Done';
 // components
 import { ErrorMessage } from 'formik';
+import { FormControlLabel } from '@material-ui/core';
+import axiosInstance from '../helpers/axios';
+import CustomBox from '../common/CustomBox';
 import CommonSnackBar from '../common/CommonSnackBar';
 import { getCurrentMonthRange, getDatesInRange } from '../utils/constants';
 import { app } from '../firebase_setup/firebase';
@@ -99,16 +104,20 @@ export default function AttendancePage({ styles }) {
   const [page, setPage] = useState(0);
   const params = useParams();
   const [selectedRow, setSelectedRow] = useState();
+  const [openModal, setOpenMdal] = useState(false);
   const [datesRange, setDatesRange] = useState([]);
   const [usersWithAttendance, setUsersWithAttendance] = useState([]);
-  const [updateStateData, setUpdateStateData] = useState([]);
+  const [attendanceDate, setAttendanceDate] = useState();
+  const [attendanceUserData, setAttendanceUserData] = useState();
   const [order, setOrder] = useState('asc');
   const [tableHead, setTableHead] = useState([]);
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
   const [selected, setSelected] = useState([]);
+  const [isChecked, setIsChecked] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarErrorMsg, setSnackbarErrorMsg] = useState('');
+  const [labelName, setLabelName] = useState('');
 
   const [orderBy, setOrderBy] = useState('users');
 
@@ -121,6 +130,9 @@ export default function AttendancePage({ styles }) {
   const handleOpenSnackBar = () => setOpenSnackBar(true);
 
   const handleCloseSnackBar = () => setOpenSnackBar(false);
+
+  const handleOpen = () => setOpenMdal(true);
+  const handleClose = () => setOpenMdal(false);
 
   const db = getFirestore(app);
   const classes = useStyles();
@@ -205,6 +217,13 @@ export default function AttendancePage({ styles }) {
     fetchData();
   };
 
+  const handleOpenTakePresentAttendance = async (userData, date) => {
+    setAttendanceUserData(userData);
+    setAttendanceDate(date);
+    setLabelName('Mark Present');
+    handleOpen();
+  };
+
   const handleRejectAttendance = async (userData, date) => {
     try {
       const documentRef = doc(db, 'users', userData?.uid);
@@ -285,7 +304,12 @@ export default function AttendancePage({ styles }) {
             );
           } else {
             userTableRow.push(
-              <TableCell align="left">
+              <TableCell
+                align="left"
+                onClick={() => {
+                  handleOpenTakePresentAttendance(userData, date);
+                }}
+              >
                 <Tooltip title={`Location - ${attendanceData?.location}`} placement="top">
                   <Avatar className={`${classes.absent}`}>A</Avatar>
                 </Tooltip>
@@ -297,7 +321,12 @@ export default function AttendancePage({ styles }) {
         }
       } else if (date <= currentDate) {
         userTableRow.push(
-          <TableCell align="left">
+          <TableCell
+            align="left"
+            onClick={() => {
+              handleOpenTakePresentAttendance(userData, date);
+            }}
+          >
             <Avatar className={`${classes.absent} ${classes.letter}`}>A</Avatar>
           </TableCell>
         );
@@ -311,6 +340,35 @@ export default function AttendancePage({ styles }) {
 
   const handleReload = () => {
     fetchData();
+  };
+
+  const handleCheckboxChange = async (event) => {
+    try {
+      setIsChecked(event.target.checked);
+
+      if (!attendanceUserData || !attendanceUserData.uid || !attendanceDate) {
+        throw new Error('Invalid attendance data');
+      }
+
+      const inputData = {
+        userId: attendanceUserData.uid,
+        date: attendanceDate,
+        location: 'Location Not Found',
+      };
+
+      const response = await axiosInstance.post('/takeAttendance', inputData);
+
+      // Check if the response contains data property
+      if (response && response.data) {
+        setIsChecked(false);
+        fetchData();
+        handleClose();
+      } else {
+        throw new Error('Invalid response data');
+      }
+    } catch (error) {
+      console.error('Error occurred:', error);
+    }
   };
 
   useEffect(() => {
@@ -331,9 +389,6 @@ export default function AttendancePage({ styles }) {
     setTableHead([{ id: 'display_name', label: 'Users', alignRight: false }, ...tableHeadAray]);
   }, [startDate, endDate]);
 
-  // useEffect(() => {
-  //   generateTableRow();
-  // }, [usersWithAttendance]);
   useEffect(() => {
     const defaultDates = getCurrentMonthRange();
     setStartDate(new Date());
@@ -448,6 +503,24 @@ export default function AttendancePage({ styles }) {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
+        <Modal
+          open={openModal}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <CustomBox>
+            <Grid container>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={<Checkbox checked={isChecked} onChange={handleCheckboxChange} color="primary" />}
+                  label={labelName}
+                  labelPlacement="end"
+                />
+              </Grid>
+            </Grid>
+          </CustomBox>
+        </Modal>
       </Container>
       <CommonSnackBar
         openSnackBar={openSnackBar}

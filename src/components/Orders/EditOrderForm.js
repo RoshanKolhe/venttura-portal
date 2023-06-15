@@ -52,6 +52,7 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const dateTimePickerRef = useRef(null);
   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const [goalsWithProductData, setGoalsWithProductData] = useState([]);
+  const [distributorInventory, setDistributorInventory] = useState([]);
   const [allBuyers, setAllBuyers] = useState([]);
   const [allDistributors, setAllDistributors] = useState([]);
   const [allProductsWithOrderData, setAllProductsWithOrderData] = useState([]);
@@ -83,10 +84,12 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
     onSubmit: async (values) => {
       try {
         setLoading(true);
-
         // Check if buyer and distributor references are provided
         if (!values.buyer || !values.distributor) {
           throw new Error('Buyer and distributor references are required.');
+        }
+        if (!distributorInventory || distributorInventory.length === 0) {
+          throw new Error('Distributor Inventory is not present');
         }
 
         const buyerRef = doc(db, 'Buyers', values.buyer);
@@ -102,7 +105,6 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
           totalBeforeDiscount += res.totalBeforeDiscount;
 
           const productRef = doc(db, 'Products', res.variationRefrence.productRefrence.id);
-
           if (total !== 0) {
             accumulator.push({
               ...res,
@@ -114,7 +116,6 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
 
           return accumulator;
         }, []);
-
         const inputData = {
           BuyerRefrence: buyerRef,
           DistributorRefrence: distributorRef,
@@ -124,21 +125,32 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
           products: updatedArray,
         };
         const docRef = doc(db, 'Orders', initialValues?.id);
-        await updateDoc(docRef, inputData);
+        // await updateDoc(docRef, inputData);
 
-        setLoading(false);
-        onDataSubmit('Order updated successfully');
+        // setLoading(false);
+        // onDataSubmit('Order updated successfully');
       } catch (error) {
         console.error('Error updating order:', error);
         setLoading(false);
-        onDataSubmit('Failed to update order. Please try again.');
+        onDataSubmit("Failed to update order.Please verify the quantity availability in the distributor's inventory.");
       }
     },
   });
 
   const handleItemChanged = (e, row, targetField) => {
+    
     const foundIndex = allProductsWithOrderData.findIndex((x) => x.variationId === row.variationId);
     const rowData = allProductsWithOrderData[foundIndex];
+    // if(targetField === 'quantity'){
+    //  console.log(rowData);
+    //  const findSimilarInventory = distributorInventory.find((obj1) => obj1.variationId === rowData.variationId);
+    //  console.log(findSimilarInventory);
+    //  const totalInvenotry = findSimilarInventory.inventory +  rowData.quantity;
+    //  if(totalInvenotry < e.target.value){
+    //   return;
+    //  } 
+    
+    // }
     const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value || 0) };
 
     const updatedFilteredGoals = allProductsWithOrderData.map((item, index) => {
@@ -209,6 +221,17 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
       setAllProductsWithOrderData(productsWithDiscountAndTotal);
     };
 
+    const fetchDistributorDefaultInventory = async () => {
+      const inputData = {
+        distributorId: initialValues?.DistributorRefrence?.id,
+      };
+
+      axiosInstance.post('/getDefaultInventoryData', inputData).then((res) => {
+        setDistributorInventory(res.data.data);
+      });
+    };
+
+    fetchDistributorDefaultInventory();
     fetchData();
   }, [initialValues.products.length, goalsWithProductData]);
 
@@ -272,7 +295,6 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
 
       setAllDistributors(updatedDocuments);
     };
-
     fetchDistributors();
     fetchBuyers();
     fetchDataVariation();
@@ -308,6 +330,7 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
                 value={formik.values.status}
                 label="status"
                 onChange={handleChange}
+                disabled
                 className={formik?.touched?.status && formik?.errors?.status ? 'red-border' : ''}
               >
                 <MenuItem value="placed">Placed</MenuItem>
@@ -326,6 +349,7 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
                 value={formik.values.buyer}
                 label="buyer"
                 onChange={handleChangeBuyer}
+                disabled
                 className={formik?.touched?.buyer && formik?.errors?.buyer ? 'red-border' : ''}
               >
                 {allBuyers.length > 0

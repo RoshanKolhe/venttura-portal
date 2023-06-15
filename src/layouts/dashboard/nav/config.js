@@ -15,7 +15,7 @@ const navConfig = [
     title: 'users',
     path: '/users',
     icon: icon('ic_user'),
-  },  
+  },
   {
     title: 'category',
     path: '/categories',
@@ -35,6 +35,11 @@ const navConfig = [
     title: 'distributors',
     path: '/distributors',
     icon: icon('ic_distributor'),
+  },
+  {
+    title: 'Products',
+    path: '/products',
+    icon: icon('ic_products'),
   },
   {
     title: 'Orders',

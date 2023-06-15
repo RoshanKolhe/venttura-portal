@@ -202,12 +202,24 @@ export default function TasksPage() {
     fetchData();
   };
 
-  const getFormattedDate = (firebaseDate) => {
-    if (firebaseDate) {
-      const date = new Date(firebaseDate._seconds * 1000 + firebaseDate._nanoseconds / 1000000);
-      const formattedDate = date.toLocaleString(); //  change the format to your preferred date format
+  const getFormattedDate = (orderDate) => {
+    if (orderDate) {
+      const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
+
+      const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      };
+
+      const formattedDate = date.toLocaleString('en-IN', options);
       return formattedDate;
     }
+
     return '';
   };
   console.log(isNotFound);

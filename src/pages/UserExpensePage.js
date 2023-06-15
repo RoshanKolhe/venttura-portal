@@ -45,8 +45,8 @@ const TABLE_HEAD = [
   { id: 'distributor', label: 'Email', alignRight: false },
   { id: 'total', label: 'Start Date ', alignRight: false },
   { id: 'date', label: 'End Date', alignRight: false },
-  { id: 'status', label: 'Status', alignRight: false },
   { id: 'type', label: 'Type', alignRight: false },
+  { id: 'status', label: 'Status', alignRight: false },
   { id: '' },
 ];
 
@@ -201,7 +201,7 @@ export default function UserExpensePage() {
     await Promise.all(
       querySnapshot.docs.map(async (element) => {
         const data = element.data();
-        const id = element.id;
+        const {id} = element;
         if (data.salesPerson) {
           const referenceDoc = doc(db, data.salesPerson.path);
           const referenceDocSnap = await getDoc(referenceDoc);
@@ -215,13 +215,24 @@ export default function UserExpensePage() {
     );
     setOrders(results);
   };
-
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
-      const formattedDate = date.toLocaleString(); //  change the format to your preferred date format
+
+      const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      };
+
+      const formattedDate = date.toLocaleString('en-IN', options);
       return formattedDate;
     }
+
     return '';
   };
 
@@ -298,8 +309,7 @@ export default function UserExpensePage() {
                             <Chip label="Rejected" style={{ backgroundColor: '#d9534f', color: 'white' }} />
                           )}
                         </TableCell>
-                        {files.map((element) => {
-                          return (
+                        {files.map((element) => (
                             <TableCell align="left">
                               <Label
                                 color="secondary"
@@ -309,8 +319,7 @@ export default function UserExpensePage() {
                                 View
                               </Label>
                             </TableCell>
-                          );
-                        })}
+                          ))}
 
                         <TableCell align="right">
                           <IconButton

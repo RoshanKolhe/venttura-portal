@@ -99,9 +99,21 @@ export default function ViewDetails() {
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
-      const formattedDate = date.toLocaleString(); // change the format to your preferred date format
+
+      const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      };
+
+      const formattedDate = date.toLocaleString('en-IN', options);
       return formattedDate;
     }
+
     return '';
   };
 
@@ -237,10 +249,14 @@ export default function ViewDetails() {
               })}
 
               <Grid item xs={12} mt={3}>
-                <Typography style={{ fontWeight: '700' }}>Total Before Discount : ₹{totalBeforeDiscount}</Typography>
+                <Typography style={{ fontWeight: '700' }}>
+                  Total Before Discount : ₹{totalBeforeDiscount.toFixed(2)}
+                </Typography>
               </Grid>
               <Grid item xs={12} mt={1} mb={2}>
-                <Typography style={{ fontWeight: '700' }}>Total After Discount : ₹{totalAfterDiscount}</Typography>
+                <Typography style={{ fontWeight: '700' }}>
+                  Total After Discount : ₹{totalAfterDiscount.toFixed(2)}
+                </Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography>Order ID : {params.id}</Typography>
@@ -274,7 +290,7 @@ export default function ViewDetails() {
                   }}
                 >
                   <Typography variant="h2" style={{ fontSize: '2rem', fontWeight: '500' }}>
-                    Total : ₹{totalAfterDiscount}
+                    Total : ₹{totalAfterDiscount.toFixed(2)}
                   </Typography>
                   {/* <Typography style={{ fontSize: '25px', fontWeight: '600' }}></Typography> */}
                 </div>

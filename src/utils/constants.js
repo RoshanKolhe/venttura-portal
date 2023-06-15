@@ -25,6 +25,17 @@ export const variationJson = async () => {
   return results;
 };
 
+export const allProductsWIthVariation = async () => {
+  const querySnapshot = await getDocs(collection(firestore, 'Variation'));
+  const results = [];
+  querySnapshot.docs.forEach((element) => {
+    results.push({
+      productrefrence: element.ref,
+    });
+  });
+  return results;
+};
+
 export function getCurrentMonthRange() {
   const currentDate = new Date();
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);

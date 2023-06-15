@@ -37,6 +37,7 @@ import Scrollbar from '../components/scrollbar';
 const TABLE_HEAD = [
   { id: 'BuyerRefrence.BuyerName', label: 'Store/Vet', alignRight: false },
   { id: 'distributor', label: 'Distributor', alignRight: false },
+  { id: 'orderCreater', label: 'Order Creator', alignRight: false },
   { id: 'total', label: 'Total', alignRight: false },
   { id: 'date', label: 'Date', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
@@ -236,7 +237,7 @@ export default function OrdersPage() {
     );
     setOrders(results);
   };
-
+  console.log(orders);
   const handleReload = () => {
     fetchData();
   };
@@ -244,9 +245,21 @@ export default function OrdersPage() {
   const getFormattedDate = (orderDate) => {
     if (orderDate) {
       const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
-      const formattedDate = date.toLocaleString(); //  change the format to your preferred date format
+
+      const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      };
+
+      const formattedDate = date.toLocaleString('en-IN', options);
       return formattedDate;
     }
+
     return '';
   };
 
@@ -316,7 +329,8 @@ export default function OrdersPage() {
                           </Typography>
                         </TableCell>
                         <TableCell align="left">{DistributorRefrence?.VendorName}</TableCell>
-                        <TableCell align="left">{totalAfterDiscount}</TableCell>
+                        <TableCell align="left">{orderCreator?.display_name}</TableCell>
+                        <TableCell align="left">{totalAfterDiscount.toFixed(2)}</TableCell>
                         <TableCell align="left">{getFormattedDate(OrderDate)}</TableCell>
                         <TableCell align="left">
                           {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}

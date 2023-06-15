@@ -2,6 +2,7 @@ import { useNavigate, useRoutes } from 'react-router-dom';
 // layouts
 import React, { useContext, useEffect } from 'react';
 // import { getAuth } from 'firebase/auth';
+import ProductsPage from '../pages/ProductsPage';
 import TasksPage from '../pages/TasksPage';
 import InventoryBuyerPage from '../pages/InventoryBuyerPage';
 import DocumentsPage from '../pages/DocumentsPage';
@@ -50,6 +51,7 @@ export default function Router() {
             { path: '/categories', element: <CategoriesPage /> },
             { path: '/documents', element: <DocumentsPage /> },
             { path: '/orders', element: <OrdersPage /> },
+            { path: '/products', element: <ProductsPage /> },
             { path: '/orders/:id', element: <ViewDetails /> },
             { path: '/users/goals/:id', element: <GolasPage /> },
             { path: '/users/tasks/:id', element: <TasksPage /> },

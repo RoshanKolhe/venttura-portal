@@ -103,6 +103,7 @@ export default function InventoryBuyerPage() {
   const navigate = useNavigate();
   const [order, setOrder] = useState('asc');
   const [inventory, setInventory] = useState([]);
+  const [buyerData, setBuyerData] = useState();
   const [selected, setSelected] = useState([]);
   const [selectedRow, setSelectedRow] = useState();
   const [orderBy, setOrderBy] = useState('name');
@@ -164,6 +165,27 @@ export default function InventoryBuyerPage() {
     await updateDoc(docRef, buyer);
   };
 
+  const getFormattedDate = (orderDate) => {
+    console.log(orderDate);
+    if (orderDate) {
+      const date = new Date(orderDate._seconds * 1000 + orderDate._nanoseconds / 1000000);
+
+      const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      };
+
+      const formattedDate = date.toLocaleString('en-IN', options);
+      return formattedDate;
+    }
+
+    return '';
+  };
   const handleItemChanged = (e, row, targetField) => {
     const foundIndex = inventory.findIndex((x) => x.id === row.id);
     const rowData = inventory[foundIndex];
@@ -193,6 +215,7 @@ export default function InventoryBuyerPage() {
             });
             i++;
           });
+          setBuyerData(res.data.buyerData);
           setInventory(filteredData);
         }
       })
@@ -205,6 +228,8 @@ export default function InventoryBuyerPage() {
     fetchData();
   }, []);
 
+  console.log(buyerData);
+
   return (
     <>
       <Helmet>
@@ -216,6 +241,28 @@ export default function InventoryBuyerPage() {
           <Typography variant="h4" gutterBottom>
             Inventory
           </Typography>
+        </Stack>
+
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+          {buyerData ? (
+            <Stack direction="column">
+              <Typography variant="body1" gutterBottom>
+                Last Reviewed By: {buyerData?.stockReviewedBy?.display_name}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                Last Reviewed Date: {getFormattedDate(buyerData?.lastVerificationDate)}
+              </Typography>
+            </Stack>
+          ) : null}
+          {buyerData?.isVerified ? (
+            <Typography variant="body1" gutterBottom style={{ color: '#25a032' }}>
+              Verified
+            </Typography>
+          ) : (
+            <Typography variant="body1" gutterBottom style={{ color: '#ff0000' }}>
+              Not-Verified
+            </Typography>
+          )}
         </Stack>
 
         <Card>
