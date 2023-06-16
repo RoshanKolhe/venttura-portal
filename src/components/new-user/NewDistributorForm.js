@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Field, useFormik } from 'formik';
+import { Field, FieldArray, useFormik } from 'formik';
 import * as yup from 'yup';
 import 'react-phone-input-2/lib/material.css';
 import SaveIcon from '@mui/icons-material/Save';
@@ -32,6 +32,7 @@ import CommonSnackBar from '../../common/CommonSnackBar';
 import { app } from '../../firebase_setup/firebase';
 
 const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
+  console.log(initialValues);
   const location = useLocation();
   const navigate = useNavigate();
   const currentDate = new Date();
@@ -53,10 +54,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
     ContactPerson: yup.string('Enter ContactPerson').required('Contact Person is required'),
     Address: yup.string('Enter Address').required('Address is required'),
     GstIn: yup.string('Enter GSTIN'),
-    DistrbutorContactNumber: yup
-      .string('Enter Contact Number')
-      .required('Contact Number is required')
-      .max(10, 'Must be less than 10 characters'),
+    DistrbutorContactNumber: yup.array().of(yup.string().required('Distrbutor Contact Number is required')),
     Location: yup.string('Select Location').required('Location is required'),
   });
 
@@ -67,11 +65,12 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
       ContactPerson: initialValues?.ContactPerson || '',
       Location: initialValues?.Location || '',
       Address: initialValues?.Address || '',
-      DistrbutorContactNumber: initialValues?.DistrbutorContactNumber || '',
+      ContactList: initialValues?.ContactList || [],
       GstIn: initialValues?.GSTIN || '',
     },
     enableReinitialize: true,
     validationSchema: buyerFormValidationSchema,
+    validateOnChange: false,
     onSubmit: async (values) => {
       setLoading(true);
       try {
@@ -81,7 +80,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
           const newUser = {
             Address: values.Address,
             VendorName: values.VendorName,
-            DistrbutorContactNumber: `${values.DistrbutorContactNumber}`,
+            ContactList: values.ContactList,
             ContactPerson: values.ContactPerson,
             Location: values.Location,
             GSTIN: values.GstIn || '',
@@ -93,7 +92,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
           const newUser = {
             Address: values.Address,
             VendorName: values.VendorName,
-            DistrbutorContactNumber: `${values.DistrbutorContactNumber}`,
+            ContactList: values.ContactList,
             ContactPerson: values.ContactPerson,
             Location: values.Location,
             GSTIN: values.GstIn || '',
@@ -177,7 +176,29 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
             />
           </Grid>
           <Grid item xs={12} lg={12} margin={2}>
-            <TextField
+            <FieldArray name="ContactList">
+              {({ push, remove }) => (
+                <div>
+                  {formik.values.ContactList.map((number, index) => (
+                    <div key={index}>
+                      <TextField
+                        name={`ContactList[${index}]`}
+                        label="Contact Number"
+                        value={number}
+                        onChange={(e) => push(e.target.value)}
+                      />
+                      <Button variant="outlined" onClick={() => remove(index)}>
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outlined" onClick={() => push('')}>
+                    Add Contact Number
+                  </Button>
+                </div>
+              )}
+            </FieldArray>
+            {/* <TextField
               InputProps={{ disableUnderline: true }}
               fullWidth
               id="DistrbutorContactNumber"
@@ -189,7 +210,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
               error={formik.touched.DistrbutorContactNumber && Boolean(formik.errors.DistrbutorContactNumber)}
               helperText={formik.touched.DistrbutorContactNumber && formik.errors.DistrbutorContactNumber}
             />
-            <FormHelperText>Please provide your WhatsApp contact number without the "+91" country code.</FormHelperText>
+            <FormHelperText>Please provide your WhatsApp contact number without the "+91" country code.</FormHelperText> */}
           </Grid>
           <Grid item xs={12} lg={12} margin={2}>
             <TextField

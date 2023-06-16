@@ -93,7 +93,6 @@ const NewProductForm = ({ initialValues, handleClose, onDataSubmit }) => {
           };
 
           await updateDoc(productRef, productData);
-          console.log(values?.id);
           const variationRef = doc(firestore, 'Variation', values?.id);
           const variationData = {
             productRefrence: productRef,
@@ -102,7 +101,6 @@ const NewProductForm = ({ initialValues, handleClose, onDataSubmit }) => {
           };
 
           await updateDoc(variationRef, variationData);
-
           setLoading(false);
           onDataSubmit('Product updated successfully');
         }

@@ -44,7 +44,14 @@ import CommonSnackBar from '../../common/CommonSnackBar';
 import { app } from '../../firebase_setup/firebase';
 import WarningGoalPopup from '../warningGoalPopup/warningGoalPopup';
 
-const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
+const EditOrderForm = ({
+  initialValues,
+  handleClose,
+  onDataSubmit,
+  setSuccessMessage,
+  setErrorMessage,
+  handleOpenSnackBar,
+}) => {
   const currentDate = new Date();
   const [selectedDate, setSelectedDate] = useState(null);
   // const [userAllGoals, setUserAllGoals] = useState([]);
@@ -61,12 +68,8 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const params = useParams();
   const [openSnackBar, setOpenSnackBar] = useState(false);
   const db = getFirestore(app);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
   const [loading, setLoading] = useState(false);
-  const handleOpenSnackBar = () => setOpenSnackBar(true);
-  const handleCloseSnackBar = () => setOpenSnackBar(false);
 
   const editOrderFormValidationSchema = yup.object({
     status: yup.string('Select status'),
@@ -113,7 +116,6 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
               productRefrence: productRef,
             });
           }
-
           return accumulator;
         }, []);
         const inputData = {
@@ -125,10 +127,47 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
           products: updatedArray,
         };
         const docRef = doc(db, 'Orders', initialValues?.id);
-        // await updateDoc(docRef, inputData);
-
-        // setLoading(false);
-        // onDataSubmit('Order updated successfully');
+        if (initialValues?.DistributorRefrence?.id === values.distributor) {
+          const inputDisributorData = {
+            orderId: params.id,
+            distributorId: values.distributor,
+            products: updatedArray,
+          };
+          const response = await axiosInstance.post('/updateOrderDistributorNotChanged', inputDisributorData);
+          if (response.data && response.data.success) {
+            await updateDoc(docRef, inputData);
+            setSuccessMessage('Order updated successfully');
+            setErrorMessage('');
+            handleOpenSnackBar();
+          } else if (!response.data.success) {
+            setErrorMessage(response.data.message);
+            setSuccessMessage('');
+            handleOpenSnackBar();
+            setLoading(false);
+            return;
+          }
+        } else {
+          const inputChangedDisributorData = {
+            orderId: params.id,
+            distributorId: values.distributor,
+            products: updatedArray,
+          };
+          const response = await axiosInstance.post('/updateOrderDistributorChanged', inputChangedDisributorData);
+          if (response.data && response.data.success) {
+            await updateDoc(docRef, inputData);
+            setSuccessMessage('Order updated successfully');
+            setErrorMessage('');
+            handleOpenSnackBar();
+          } else if (!response.data.success) {
+            setErrorMessage(response.data.message);
+            setSuccessMessage('');
+            handleOpenSnackBar();
+            setLoading(false);
+            return;
+          }
+        }
+        setLoading(false);
+        onDataSubmit();
       } catch (error) {
         console.error('Error updating order:', error);
         setLoading(false);
@@ -138,19 +177,14 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
   });
 
   const handleItemChanged = (e, row, targetField) => {
-    
     const foundIndex = allProductsWithOrderData.findIndex((x) => x.variationId === row.variationId);
     const rowData = allProductsWithOrderData[foundIndex];
-    // if(targetField === 'quantity'){
-    //  console.log(rowData);
-    //  const findSimilarInventory = distributorInventory.find((obj1) => obj1.variationId === rowData.variationId);
-    //  console.log(findSimilarInventory);
-    //  const totalInvenotry = findSimilarInventory.inventory +  rowData.quantity;
-    //  if(totalInvenotry < e.target.value){
-    //   return;
-    //  } 
-    
-    // }
+    console.log('percentDiscount', targetField);
+
+    if (targetField === 'percentDiscount' && (parseFloat(e.target.value) < 0 || parseFloat(e.target.value) > 100)) {
+      console.log('here');
+      return;
+    }
     const updatedData = { ...rowData, [targetField]: parseFloat(e.target.value || 0) };
 
     const updatedFilteredGoals = allProductsWithOrderData.map((item, index) => {
@@ -411,11 +445,10 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
                       </TableCell>
                       <TableCell>
                         <TextField
-                          InputProps={{ disableUnderline: true }}
                           fullWidth
                           id="percentDiscount"
                           variant="standard"
-                          type="text"
+                          type="number"
                           value={product.percentDiscount}
                           onChange={(e) => handleItemChanged(e, product, 'percentDiscount')}
                         />
@@ -447,12 +480,6 @@ const EditOrderForm = ({ initialValues, handleClose, onDataSubmit }) => {
             </LoadingButton>
           </Grid>
         </Grid>
-        <CommonSnackBar
-          openSnackBar={openSnackBar}
-          handleCloseSnackBar={handleCloseSnackBar}
-          msg={errorMessage !== '' ? errorMessage : successMessage}
-          severity={errorMessage !== '' ? 'error' : 'success'}
-        />
       </form>
     </div>
   );

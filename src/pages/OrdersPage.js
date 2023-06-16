@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, getDoc, doc, query, orderBy as changeOrder} from 'firebase/firestore';
 // @mui
 import {
   Card,
@@ -37,7 +37,7 @@ import Scrollbar from '../components/scrollbar';
 const TABLE_HEAD = [
   { id: 'BuyerRefrence.BuyerName', label: 'Store/Vet', alignRight: false },
   { id: 'distributor', label: 'Distributor', alignRight: false },
-  { id: 'orderCreater', label: 'Order Creator', alignRight: false },
+  { id: 'orderCreater', label: 'Sales Person', alignRight: false },
   { id: 'total', label: 'Total', alignRight: false },
   { id: 'date', label: 'Date', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
@@ -199,7 +199,7 @@ export default function OrdersPage() {
   // };
 
   const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'Orders'));
+    const querySnapshot = await getDocs(query(collection(db, 'Orders'), changeOrder('OrderDate', 'desc')));
     const results = [];
 
     await Promise.all(
@@ -333,8 +333,7 @@ export default function OrdersPage() {
                         <TableCell align="left">{totalAfterDiscount.toFixed(2)}</TableCell>
                         <TableCell align="left">{getFormattedDate(OrderDate)}</TableCell>
                         <TableCell align="left">
-                          {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}
-                          {status}
+                          <Label color={status === 'cancel' ? 'error' : status === 'placed' ? 'warning': 'success'}>{sentenceCase(status)}</Label>
                         </TableCell>
 
                         <TableCell align="right">

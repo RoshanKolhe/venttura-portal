@@ -23,6 +23,8 @@ export default function ViewDetails() {
 
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleEditClick = () => {
     handleOpen();
@@ -132,30 +134,34 @@ export default function ViewDetails() {
           products,
           totalAfterDiscount,
           totalBeforeDiscount,
+          status,
         } = row;
         // eslint-disable-next-line no-lone-blocks
 
         return (
           <>
             <Grid container px={10} style={{ color: '#757575 ' }}>
-              <Grid item xs={12}>
-                <Typography
-                  variant="h6"
-                  onClick={() => {
-                    handleEditClick();
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignITems: 'center',
-                    justifyContent: 'end',
-                    cursor: 'pointer',
-                    color: '#007FFF',
-                    fontWeight: '500px',
-                  }}
-                >
-                  Edit
-                </Typography>
-              </Grid>
+              {status !== 'cancel' && (
+                <Grid item xs={12}>
+                  <Typography
+                    variant="h6"
+                    onClick={() => {
+                      handleEditClick();
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignITems: 'center',
+                      justifyContent: 'end',
+                      cursor: 'pointer',
+                      color: '#007FFF',
+                      fontWeight: '500px',
+                    }}
+                  >
+                    Edit
+                  </Typography>
+                </Grid>
+              )}
+
               <Grid item xs={12} sm={12} mb={1}>
                 <Typography variant="h6" style={{ fontWeight: '700' }}>
                   Buyers Details
@@ -305,21 +311,22 @@ export default function ViewDetails() {
               <CustomBox>
                 <EditOrderForm
                   handleClose={handleClose}
-                  onDataSubmit={(msg) => {
+                  onDataSubmit={() => {
                     handleClose();
                     getDataFromFirebase(collectionName, documentId);
-                    setMsg(msg);
-                    handleOpenSnackBar();
                   }}
                   initialValues={data[0]}
+                  setErrorMessage={setErrorMessage}
+                  setSuccessMessage={setSuccessMessage}
+                  handleOpenSnackBar={handleOpenSnackBar}
                 />
               </CustomBox>
             </Modal>
             <CommonSnackBar
               openSnackBar={openSnackBar}
               handleCloseSnackBar={handleCloseSnackBar}
-              msg={msg}
-              severity="success"
+              msg={errorMessage !== '' ? errorMessage : successMessage}
+              severity={errorMessage !== '' ? 'error' : 'success'}
             />
           </>
         );

@@ -447,10 +447,10 @@ export default function ProductsPage({ styles }) {
             <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
             Edit
           </MenuItem>
-          <MenuItem sx={{ color: 'error.main' }}>
+          {/* <MenuItem sx={{ color: 'error.main' }}>
             <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
             Delete
-          </MenuItem>
+          </MenuItem> */}
         </Popover>
         <Modal
           open={openModal}
