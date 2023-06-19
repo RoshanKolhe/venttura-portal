@@ -39,7 +39,7 @@ const TABLE_HEAD = [
   { id: 'distributor', label: 'Distributor', alignRight: false },
   { id: 'orderCreater', label: 'Sales Person', alignRight: false },
   { id: 'total', label: 'Total', alignRight: false },
-  { id: 'date', label: 'Date', alignRight: false },
+  { id: 'OrderDate', label: 'Date', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
   { id: 'completeDocument', label: 'Document', alignRight: false },
   { id: '' },
@@ -83,13 +83,13 @@ export default function OrdersPage() {
 
   const [selectedRow, setSelectedRow] = useState();
 
-  const [order, setOrder] = useState('asc');
+  const [order, setOrder] = useState('desc');
 
   const [orders, setOrders] = useState([]);
 
   const [selected, setSelected] = useState([]);
 
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('OrderDate');
 
   const [filterName, setFilterName] = useState('');
 
