@@ -24,7 +24,7 @@ import { initial, omit } from 'lodash';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import closefill from '@iconify/icons-eva/close-fill';
-import { Timestamp, collection, doc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
+import { Timestamp, collection, doc, getDocs, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 import { LoadingButton } from '@mui/lab';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { getCurrentMonthAndYear, variationJson } from '../../utils/constants';
@@ -47,7 +47,7 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const firestore = getFirestore(app);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
+  const [allLocations, setAllLocations] = useState([]);
   const [loading, setLoading] = useState(false);
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
@@ -61,7 +61,7 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
       .string('Enter Contact Number')
       .required('Contact Number is required')
       .max(10, 'Must be less than 10 characters'),
-    Location: yup.string('Select Location').required('Location is required'),
+    location: yup.string('Select location').required('location is required'),
   });
 
   const formik = useFormik({
@@ -69,7 +69,7 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
       id: initialValues?.id,
       BuyerName: initialValues?.BuyerName || '',
       ContactPerson: initialValues?.ContactPerson || '',
-      Location: initialValues?.Location || '',
+      location: initialValues?.LocationRefrence?.id || '',
       Address: initialValues?.Address || '',
       ContactNumber: initialValues?.ContactNumber || '',
       GSTIN: initialValues?.GSTIN || '',
@@ -85,12 +85,13 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
           const usersRef = collection(firestore, 'Buyers');
           const docRef = doc(usersRef);
           const currentUserRef = doc(firestore, 'users', currentUser.uid);
+          const locationRef = doc(firestore, 'Locations', values.location);
           const newUser = {
             Address: values.Address,
             BuyerName: values.BuyerName,
             ContactNumber: `${values.ContactNumber}`,
             ContactPerson: values.ContactPerson,
-            Location: values.Location,
+            LocationRefrence: locationRef,
             GSTIN: values.GSTIN || '',
             Status: 'verified',
             anniversary: values.anniversary || '',
@@ -101,12 +102,13 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
           setLoading(false);
         } else {
           const docRef = doc(firestore, 'Buyers', initialValues?.id);
+          const locationRef = doc(firestore, 'Locations', values.location);
           const newUser = {
             Address: values.Address,
             BuyerName: values.BuyerName,
             ContactNumber: `${values.ContactNumber}`,
             ContactPerson: values.ContactPerson,
-            Location: values.Location,
+            LocationRefrence: locationRef,
             GSTIN: values.GSTIN || '',
             anniversary: values.anniversary || '',
             birthdate: values.birthdate || '',
@@ -121,10 +123,6 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
       }
     },
   });
-
-  const handleChange = (event) => {
-    formik.setFieldValue('Location', event.target.value);
-  };
 
   const handleChangeAnniversaryDate = (event) => {
     if (event) {
@@ -157,6 +155,25 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
       formik.setFieldValue('birthdate', null);
     }
   };
+
+  const handleChangeLocation = (event) => {
+    formik.setFieldValue('location', event.target.value);
+  };
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const querySnapshot = await getDocs(collection(firestore, 'Locations'));
+
+      const updatedDocuments = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setAllLocations(updatedDocuments);
+    };
+
+    fetchLocations();
+  }, []);
 
   return (
     <div>
@@ -251,22 +268,21 @@ const NewBuyerForm = ({ initialValues, handleClose, onDataSubmit }) => {
             />
           </Grid>
           <Grid item xs={12} lg={12} margin={2}>
-            <FormControl fullWidth error={formik?.touched?.Location && formik?.errors?.Location}>
-              <InputLabel id="type-label">Location</InputLabel>
+            <FormControl fullWidth error={formik?.touched?.location && formik?.errors?.location}>
+              <InputLabel id="type-label">location</InputLabel>
               <Select
                 labelId="type-label"
-                id="Location"
-                value={formik.values.Location}
+                id="location"
+                value={formik.values.location}
                 label="Location"
-                onChange={handleChange}
-                className={formik?.touched?.Location && formik?.errors?.Location ? 'red-border' : ''}
+                onChange={handleChangeLocation}
+                className={formik?.touched?.location && formik?.errors?.location ? 'red-border' : ''}
               >
-                <MenuItem value="Pune">Pune</MenuItem>
-                <MenuItem value="Mumbai">Mumbai</MenuItem>
-                <MenuItem value="Kolkata">Kolkata</MenuItem>
-                <MenuItem value="Bangalore">Bangalore</MenuItem>
+                {allLocations.length > 0
+                  ? allLocations.map((res) => <MenuItem value={res.id}>{res.locationName}</MenuItem>)
+                  : null}
               </Select>
-              <FormHelperText error>{formik?.touched?.Location && formik?.errors?.Location}</FormHelperText>
+              <FormHelperText error>{formik?.touched?.location && formik?.errors?.location}</FormHelperText>
             </FormControl>
           </Grid>
           <LocalizationProvider dateAdapter={AdapterDayjs}>

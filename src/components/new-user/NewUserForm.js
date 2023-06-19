@@ -74,6 +74,10 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
         return true;
       }),
     city: yup.string('Select city').required('city is required'),
+    ContactNumber: yup
+      .string('Enter Contact Number')
+      .required('Contact Number is required')
+      .max(10, 'Must be less than 10 characters'),
   });
 
   const formik = useFormik({
@@ -82,6 +86,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
       name: initialValues?.display_name || '',
       email: initialValues?.email || '',
       city: initialValues?.city || '',
+      ContactNumber: initialValues?.ContactNumber || '',
     },
     enableReinitialize: true,
     validationSchema: userFormValidationSchema,
@@ -99,6 +104,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
             display_name: values.name,
             email: values.email,
             city: values.city,
+            ContactNumber: values.ContactNumber,
             uid: userCredential.user.uid,
             revenuegenerated: 0.0,
             unitsSold: 0,
@@ -119,6 +125,7 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
             display_name: values.name,
             email: values.email,
             city: values.city,
+            ContactNumber: values.ContactNumber,
           };
           await updateDoc(docRef, newUser, token);
           setLoading(false);
@@ -221,6 +228,20 @@ const NewUserForm = ({ initialValues, handleClose, onDataSubmit }) => {
             </Grid>
           ) : null}
 
+          <Grid item xs={12} lg={12} margin={2}>
+            <TextField
+              InputProps={{ disableUnderline: true }}
+              fullWidth
+              id="ContactNumber"
+              name="ContactNumber"
+              label="Contact Number"
+              type="number"
+              value={formik.values.ContactNumber}
+              onChange={formik.handleChange}
+              error={formik.touched.ContactNumber && Boolean(formik.errors.ContactNumber)}
+              helperText={formik.touched.ContactNumber && formik.errors.ContactNumber}
+            />
+          </Grid>
           <Grid item xs={12} lg={12} margin={2}>
             <FormControl fullWidth error={formik?.touched?.city && formik?.errors?.city}>
               <InputLabel id="type-label">City</InputLabel>

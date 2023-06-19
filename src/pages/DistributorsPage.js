@@ -168,14 +168,26 @@ export default function DistributorsPage() {
   const isNotFound = !filteredUsers.length && !!filterName;
 
   const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, 'Distributor'));
-    const results = [];
-    // eslint-disable-next-line no-restricted-syntax
-    querySnapshot.docs.map(async (element) => {
-      const data = element.data();
-      results.push({ id: element.id, ...data });
-    });
-    setUsers(results);
+    try {
+      const querySnapshot = await getDocs(collection(db, 'Distributor'));
+      const results = [];
+      await Promise.all(
+        querySnapshot.docs.map(async (element) => {
+          const data = element.data();
+          if (data.LocationRefrence) {
+            const referenceDoc = doc(db, data.LocationRefrence.path);
+            const referenceDocSnap = await getDoc(referenceDoc);
+            const referenceData = referenceDocSnap.data();
+            data.Location = referenceData.locationName;
+          }
+          results.push({ id: element.id, ...data });
+        })
+      );
+      console.log(results);
+      setUsers(results);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
 
   const handleReload = () => {

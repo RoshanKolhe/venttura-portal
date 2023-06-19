@@ -2,7 +2,11 @@ import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs, getDoc, doc, query, orderBy as changeOrder } from 'firebase/firestore';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
+import { Icon } from '@iconify/react';
+import plusFill from '@iconify/icons-eva/plus-fill';
+import DoneIcon from '@mui/icons-material/Done';
+import CloseIcon from '@mui/icons-material/Close';
 // @mui
 import {
   Card,
@@ -22,30 +26,29 @@ import {
   IconButton,
   TableContainer,
   TablePagination,
+  Modal,
+  Chip,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 // components
-import { ListHead, ListToolbar } from '../sections/@dashboard/table';
+import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, updateDoc } from 'firebase/firestore';
+import NewLocationForm from '../components/location/NewLocationForm';
+import NewBuyerForm from '../components/new-user/NewBuyerForm';
+import CommonSnackBar from '../common/CommonSnackBar';
+import NewUserForm from '../components/new-user/NewUserForm';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // sections
+import { ListHead, ListToolbar } from '../sections/@dashboard/table';
 // mock
+import locations from '../_mock/user';
+import CustomBox from '../common/CustomBox';
 
 // ----------------------------------------------------------------------
 
-const TABLE_HEAD = [
-  { id: 'BuyerRefrence.BuyerName', label: 'Store/Vet', alignRight: false },
-  { id: 'distributor', label: 'Distributor', alignRight: false },
-  { id: 'orderCreater', label: 'Sales Person', alignRight: false },
-  { id: 'total', label: 'Total', alignRight: false },
-  { id: 'date', label: 'Date', alignRight: false },
-  { id: 'status', label: 'Status', alignRight: false },
-  { id: 'completeDocument', label: 'Document', alignRight: false },
-  { id: '' },
-];
+const TABLE_HEAD = [{ id: 'locationName', label: 'Location Name', alignRight: false }, { id: '' }];
 
-// ----------------------------------------------------------------------
+// --------------------------------------------------------------------
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -71,42 +74,38 @@ function applySortFilter(array, comparator, query) {
     return a[1] - b[1];
   });
   if (query) {
-    return filter(array, (_user) => _user?.BuyerRefrence.BuyerName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+    return filter(array, (_user) => _user.locationName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
   }
   return stabilizedThis.map((el) => el[0]);
 }
 
-export default function OrdersPage() {
+export default function LocationsPage() {
   const [open, setOpen] = useState(null);
-  const navigate = useNavigate();
+  const [msg, setMsg] = useState('');
+  const [openModal, setOpenMdal] = useState(false);
   const [page, setPage] = useState(0);
-
-  const [selectedRow, setSelectedRow] = useState();
-
+  const navigate = useNavigate();
   const [order, setOrder] = useState('asc');
-
-  const [orders, setOrders] = useState([]);
-
+  const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState([]);
-
+  const [selectedRow, setSelectedRow] = useState();
   const [orderBy, setOrderBy] = useState('name');
 
   const [filterName, setFilterName] = useState('');
 
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [openSnackBar, setOpenSnackBar] = useState(false);
 
+  const handleOpenSnackBar = () => setOpenSnackBar(true);
+  const handleCloseSnackBar = () => setOpenSnackBar(false);
   const db = getFirestore();
-
   const handleOpenMenu = (event, row) => {
-    setOpen(event.currentTarget);
     setSelectedRow(row);
+    setOpen(event.currentTarget);
   };
 
   const handleCloseMenu = () => {
     setOpen(null);
-  };
-  const handleViewPopUpClick = () => {
-    navigate(`/orders/${selectedRow.id}`);
   };
 
   const handleRequestSort = (event, property) => {
@@ -117,7 +116,7 @@ export default function OrdersPage() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = orders.map((n) => n.name);
+      const newSelecteds = locations.map((n) => n.name);
       setSelected(newSelecteds);
       return;
     }
@@ -152,116 +151,44 @@ export default function OrdersPage() {
     setPage(0);
     setFilterName(event.target.value);
   };
+  const handleOpen = () => setOpenMdal(true);
+  const handleClose = () => setOpenMdal(false);
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - locations.length) : 0;
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orders.length) : 0;
-
-  const filteredUsers = applySortFilter(orders, getComparator(order, orderBy), filterName);
+  const filteredUsers = applySortFilter(locations, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
-  // const fetchData = async () => {
-  //   const querySnapshot = await getDocs(collection(db, 'Orders'));
-  //   const results = [];
-
-  //   // console.log('DATA :', querySnapshot);
-  //   await Promise.all(
-  //     querySnapshot.docs.map(async (doc) => {
-  //       const data = doc.data();
-  //       const id = doc.id;
-
-  //       if (data.status) {
-  //         if (data.BuyerRefrence) {
-  //           const referenceDoc = doc(db, data.BuyerRefrence.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.BuyerRefrence = referenceData;
-  //         }
-  //         if (data.DistributorRefrence) {
-  //           const referenceDoc = doc(db, data.DistributorRefrence.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.DistributorRefrence = referenceData;
-  //         }
-  //         if (data.orderCreator) {
-  //           const referenceDoc = doc(db, data.orderCreator.path);
-  //           const referenceDocSnap = await getDoc(referenceDoc);
-  //           const referenceData = referenceDocSnap.data();
-
-  //           data.orderCreator = referenceData;
-  //         }
-
-  //         results.push({ id, ...data });
-  //       }
-  //     })
-  //   );
-  //   setOrders(results);
-  // };
-
   const fetchData = async () => {
-    const querySnapshot = await getDocs(query(collection(db, 'Orders'), changeOrder('OrderDate', 'desc')));
+    const querySnapshot = await getDocs(collection(db, 'Locations'));
     const results = [];
-
-    await Promise.all(
-      querySnapshot.docs.map(async (element) => {
-        const data = element.data();
-        const { id } = element;
-        if (data.status) {
-          if (data.BuyerRefrence) {
-            const referenceDoc = doc(db, data.BuyerRefrence.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
-
-            data.BuyerRefrence = referenceData;
-          }
-          if (data.DistributorRefrence) {
-            const referenceDoc = doc(db, data.DistributorRefrence.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
-
-            data.DistributorRefrence = referenceData;
-          }
-          if (data.orderCreator) {
-            const referenceDoc = doc(db, data.orderCreator.path);
-            const referenceDocSnap = await getDoc(referenceDoc);
-            const referenceData = referenceDocSnap.data();
-
-            data.orderCreator = referenceData;
-          }
-
-          // results.push(data);
-          results.push({ id, ...data });
-          // spread operator
-        }
-      })
-    );
-    setOrders(results);
+    // eslint-disable-next-line no-restricted-syntax
+    querySnapshot.docs.map(async (element) => {
+      const data = element.data();
+      results.push({ id: element.id, ...data });
+    });
+    setLocations(results);
   };
-  console.log(orders);
+
   const handleReload = () => {
     fetchData();
   };
 
-  const getFormattedDate = (orderDate) => {
-    if (orderDate) {
-      const date = new Date(orderDate.seconds * 1000 + orderDate.nanoseconds / 1000000);
+  const handleEditClick = () => {
+    setOpen(null);
+    handleOpen();
+  };
 
-      const options = {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-      };
-
-      const formattedDate = date.toLocaleString('en-IN', options);
-      return formattedDate;
+  const handleDelete = async () => {
+    try {
+      const documentRef = doc(db, 'Locations', selectedRow?.id);
+      await deleteDoc(documentRef);
+      setMsg('Document Deleted successfully');
+      handleOpenSnackBar();
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting document: ', error);
     }
-
-    return '';
   };
 
   useEffect(() => {
@@ -271,17 +198,26 @@ export default function OrdersPage() {
   return (
     <>
       <Helmet>
-        <title> Orders | Admin </title>
+        <title> Location | Admin </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            Orders
+            Location
           </Typography>
-          {/* <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
-            New User
-          </Button> */}
+          <Button
+            variant="contained"
+            component={RouterLink}
+            to="#"
+            startIcon={<Icon icon={plusFill} />}
+            onClick={() => {
+              setSelectedRow();
+              handleOpen();
+            }}
+          >
+            New Location
+          </Button>
         </Stack>
 
         <Card>
@@ -300,59 +236,26 @@ export default function OrdersPage() {
                   order={order}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
-                  rowCount={orders.length}
+                  rowCount={locations.length}
                   numSelected={selected.length}
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const {
-                      OrderId,
-                      BuyerRefrence,
-                      DistributorRefrence,
-                      OrderDate,
-                      orderCreator,
-                      status,
-                      totalAfterDiscount,
-                      totalBeforeDiscount,
-                    } = row;
-                    const selectedUser = selected.indexOf(row?.OrderId) !== -1;
+                    const { id, locationName: name } = row;
+                    const selectedUser = selected.indexOf(name) !== -1;
 
                     return (
-                      <TableRow hover key={row?.OrderId} tabIndex={-1} role="checkbox" selected={selectedUser}>
+                      <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         {/* <TableCell padding="checkbox">
-                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, row?.OrderId)} />
+                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, name)} />
                         </TableCell> */}
+
                         <TableCell component="th" scope="row">
                           <Typography variant="subtitle2" noWrap>
-                            {BuyerRefrence?.BuyerName}
+                            {name}
                           </Typography>
-                        </TableCell>
-                        <TableCell align="left">{DistributorRefrence?.VendorName}</TableCell>
-                        <TableCell align="left">{orderCreator?.display_name}</TableCell>
-                        <TableCell align="left">{totalAfterDiscount.toFixed(2)}</TableCell>
-                        <TableCell align="left">{getFormattedDate(OrderDate)}</TableCell>
-                        <TableCell align="left">
-                          <Label color={status === 'cancel' ? 'error' : status === 'placed' ? 'warning' : 'success'}>
-                            {sentenceCase(status)}
-                          </Label>
-                        </TableCell>
-
-                        <TableCell align="left">
-                          {row?.completeDocument ? (
-                            <Label
-                              color="secondary"
-                              onClick={() => window.open(row?.completeDocument, '_blank')}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              View
-                            </Label>
-                          ) : (
-                            <Label color="primary" style={{ cursor: 'pointer' }}>
-                              No Document
-                            </Label>
-                          )}
                         </TableCell>
 
                         <TableCell align="right">
@@ -406,13 +309,33 @@ export default function OrdersPage() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={orders.length}
+            count={locations.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Card>
+
+        <Modal
+          open={openModal}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <CustomBox>
+            <NewLocationForm
+              handleClose={handleClose}
+              onDataSubmit={(msg) => {
+                handleClose();
+                fetchData();
+                setMsg(msg);
+                handleOpenSnackBar();
+              }}
+              initialValues={selectedRow}
+            />
+          </CustomBox>
+        </Modal>
       </Container>
 
       <Popover
@@ -433,16 +356,21 @@ export default function OrdersPage() {
           },
         }}
       >
-        <MenuItem onClick={() => handleViewPopUpClick()}>
+        <MenuItem onClick={handleEditClick}>
           <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          View
+          Edit
         </MenuItem>
-
-        {/* <MenuItem sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
           <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
           Delete
-        </MenuItem> */}
+        </MenuItem>
       </Popover>
+      <CommonSnackBar
+        openSnackBar={openSnackBar}
+        handleCloseSnackBar={handleCloseSnackBar}
+        msg={msg}
+        severity="success"
+      />
     </>
   );
 }

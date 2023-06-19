@@ -21,7 +21,7 @@ import { initial, omit } from 'lodash';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import closefill from '@iconify/icons-eva/close-fill';
-import { Timestamp, collection, doc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
+import { Timestamp, collection, doc, getDocs, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 import { LoadingButton } from '@mui/lab';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { getCurrentMonthAndYear, variationJson } from '../../utils/constants';
@@ -32,7 +32,7 @@ import CommonSnackBar from '../../common/CommonSnackBar';
 import { app } from '../../firebase_setup/firebase';
 
 const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
-  console.log(initialValues);
+  console.log('initialValues', initialValues);
   const location = useLocation();
   const navigate = useNavigate();
   const currentDate = new Date();
@@ -44,7 +44,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
   const firestore = getFirestore(app);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
+  const [allLocations, setAllLocations] = useState([]);
   const [loading, setLoading] = useState(false);
   const handleOpenSnackBar = () => setOpenSnackBar(true);
   const handleCloseSnackBar = () => setOpenSnackBar(false);
@@ -58,8 +58,8 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
       .string('Enter Distrbutor Contact Number')
       .required(' Distrbutor Contact Number is required'),
 
-    ContactList: yup.array().of(yup.string().required('ContactList Contact Number is required')),
-    Location: yup.string('Select Location').required('Location is required'),
+    ContactList: yup.array().of(yup.string()),
+    location: yup.string('Select location').required('location is required'),
   });
 
   const formik = useFormik({
@@ -67,7 +67,7 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
       id: initialValues?.id,
       VendorName: initialValues?.VendorName || '',
       ContactPerson: initialValues?.ContactPerson || '',
-      Location: initialValues?.Location || '',
+      location: initialValues?.LocationRefrence?.id || '',
       DistrbutorContactNumber: initialValues?.DistrbutorContactNumber || '',
       Address: initialValues?.Address || '',
       ContactList: initialValues?.ContactList || [''],
@@ -81,26 +81,28 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
         if (!initialValues) {
           const usersRef = collection(firestore, 'Distributor');
           const docRef = doc(usersRef);
+          const locationRef = doc(firestore, 'Locations', values.location);
           const newUser = {
             Address: values.Address,
             VendorName: values.VendorName,
             ContactList: values.ContactList,
             ContactPerson: values.ContactPerson,
             DistrbutorContactNumber: values.DistrbutorContactNumber,
-            Location: values.Location,
+            LocationRefrence: locationRef,
             GSTIN: values.GstIn || '',
           };
           await setDoc(docRef, newUser);
           setLoading(false);
         } else {
           const docRef = doc(firestore, 'Distributor', initialValues?.id);
+          const locationRef = doc(firestore, 'Locations', values.location);
           const newUser = {
             Address: values.Address,
             VendorName: values.VendorName,
             ContactList: values.ContactList,
             ContactPerson: values.ContactPerson,
             DistrbutorContactNumber: values.DistrbutorContactNumber,
-            Location: values.Location,
+            LocationRefrence: locationRef,
             GSTIN: values.GstIn || '',
           };
           await updateDoc(docRef, newUser);
@@ -114,9 +116,24 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
     },
   });
 
-  const handleChange = (event) => {
-    formik.setFieldValue('Location', event.target.value);
+  const handleChangeLocation = (event) => {
+    formik.setFieldValue('location', event.target.value);
   };
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const querySnapshot = await getDocs(collection(firestore, 'Locations'));
+
+      const updatedDocuments = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setAllLocations(updatedDocuments);
+    };
+
+    fetchLocations();
+  }, []);
 
   return (
     <div>
@@ -246,22 +263,21 @@ const NewDistributorForm = ({ initialValues, handleClose, onDataSubmit }) => {
             />
           </Grid>
           <Grid item xs={12} lg={12} margin={2}>
-            <FormControl fullWidth error={formik?.touched?.Location && formik?.errors?.Location}>
+            <FormControl fullWidth error={formik?.touched?.location && formik?.errors?.location}>
               <InputLabel id="type-label">Location</InputLabel>
               <Select
                 labelId="type-label"
-                id="Location"
-                value={formik.values.Location}
+                id="location"
+                value={formik.values.location}
                 label="Location"
-                onChange={handleChange}
-                className={formik?.touched?.Location && formik?.errors?.Location ? 'red-border' : ''}
+                onChange={handleChangeLocation}
+                className={formik?.touched?.location && formik?.errors?.location ? 'red-border' : ''}
               >
-                <MenuItem value="Pune">Pune</MenuItem>
-                <MenuItem value="Mumbai">Mumbai</MenuItem>
-                <MenuItem value="Kolkata">Kolkata</MenuItem>
-                <MenuItem value="Bangalore">Bangalore</MenuItem>
+                {allLocations.length > 0
+                  ? allLocations.map((res) => <MenuItem value={res.id}>{res.locationName}</MenuItem>)
+                  : null}
               </Select>
-              <FormHelperText error>{formik?.touched?.Location && formik?.errors?.Location}</FormHelperText>
+              <FormHelperText error>{formik?.touched?.location && formik?.errors?.location}</FormHelperText>
             </FormControl>
           </Grid>
         </Grid>
